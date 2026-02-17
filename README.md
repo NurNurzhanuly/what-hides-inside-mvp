@@ -1,7 +1,6 @@
 # What Hides Inside? 🌒
 
 **An Atmospheric 2D Puzzle-Platformer for Gentle Exposure to Fear of Darkness.**
-*Атмосферный 2D пазл-платформер для мягкого преодоления страха темноты.*
 
 ---
 
