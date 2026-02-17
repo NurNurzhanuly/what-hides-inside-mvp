@@ -29,8 +29,8 @@ In traditional media, light represents safety. Here, the logic is flipped:
 
 
   ## 👥 Authors
-- **Aldibayeva Akku** (@your-github-username)
-- **Nurmukhammed Seitkhan** (@Nurmukhammed-username)
+- **Aldibayeva Akku** (@Akku-2325)
+- **Nurmukhammed Seitkhan** (@NurNurzhanuly)
 
 **Scientific Supervisor:** Akhmetzhanova Shynar  
 **University:** Astana IT University (AITU)  
