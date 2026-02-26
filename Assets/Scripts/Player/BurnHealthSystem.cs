@@ -1,19 +1,23 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class BurnHealthSystem : MonoBehaviour, IDamageable
 {
-    [Header("Settings")]
+    [Header("Health Settings")]
     public float maxHealth = 100f;
-    public float recoveryRate = 5f;
+    public float recoveryRate = 15f;
     
     private float _currentHealth;
     private bool _isBeingBurned;
 
-    public UnityEvent<float> onHealthChanged;
-    public UnityEvent onDeath;
+    [Header("Events")]
+    public UnityEvent<float> onHealthChanged; 
 
-    private void Awake() => _currentHealth = maxHealth;
+    private void Awake() 
+    {
+        _currentHealth = maxHealth;
+    }
 
     private void Update()
     {
@@ -36,8 +40,13 @@ public class BurnHealthSystem : MonoBehaviour, IDamageable
 
         if (_currentHealth <= 0)
         {
-            onDeath?.Invoke();
-            Debug.Log("Shadow Boy dissolved...");
+            RestartLevel();
         }
+    }
+
+    private void RestartLevel()
+    {
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(currentSceneName);
     }
 }
