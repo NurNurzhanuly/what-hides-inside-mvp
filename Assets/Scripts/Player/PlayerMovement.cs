@@ -1,13 +1,16 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Settings")]
     public float moveSpeed = 8f;
     public float jumpForce = 14f;
     public LayerMask groundLayer;
 
     private Rigidbody2D _rb;
     private BoxCollider2D _coll;
+    private IInputProvider _input; // Возвращаем интерфейс для диплома
     private float _moveX;
     private float _baseSpeed;
 
@@ -15,6 +18,8 @@ public class PlayerMovement : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _coll = GetComponent<BoxCollider2D>();
+        _input = GetComponent<IInputProvider>(); // Ищем читалку клавиш
+        
         _rb.gravityScale = 4f; 
         _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         _baseSpeed = moveSpeed;
@@ -22,11 +27,14 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        _moveX = Input.GetAxisRaw("Horizontal");
-
-        if (Input.GetButtonDown("Jump") && IsGrounded())
+        // Используем интерфейс, как прописано в твоей архитектуре
+        if (_input != null)
         {
-            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
+            _moveX = _input.GetMoveDirection().x;
+            if (_input.IsJumpPressed() && IsGrounded())
+            {
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
+            }
         }
     }
 
