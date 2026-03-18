@@ -4,49 +4,26 @@ using UnityEngine.SceneManagement;
 
 public class BurnHealthSystem : MonoBehaviour, IDamageable
 {
-    [Header("Health Settings")]
     public float maxHealth = 100f;
-    public float recoveryRate = 15f;
-    
+    public UnityEvent<float> onHealthChanged;
+
     private float _currentHealth;
-    private bool _isBeingBurned;
+    private PlayerMovement _movement;
 
-    [Header("Events")]
-    public UnityEvent<float> onHealthChanged; 
-
-    private void Awake() 
+    private void Awake()
     {
         _currentHealth = maxHealth;
-    }
-
-    private void Update()
-    {
-        if (!_isBeingBurned && _currentHealth < maxHealth)
-        {
-            _currentHealth += recoveryRate * Time.deltaTime;
-            _currentHealth = Mathf.Min(_currentHealth, maxHealth);
-            onHealthChanged?.Invoke(_currentHealth / maxHealth);
-        }
-        
-        _isBeingBurned = false; 
+        _movement = GetComponent<PlayerMovement>();
     }
 
     public void TakeDamage(float amount)
     {
-        _isBeingBurned = true;
         _currentHealth -= amount * Time.deltaTime;
+        float ratio = _currentHealth / maxHealth;
         
-        onHealthChanged?.Invoke(_currentHealth / maxHealth);
+        onHealthChanged?.Invoke(ratio);
+        if (_movement != null) _movement.SetSpeedModifier(Mathf.Lerp(0.3f, 1f, ratio));
 
-        if (_currentHealth <= 0)
-        {
-            RestartLevel();
-        }
-    }
-
-    private void RestartLevel()
-    {
-        string currentSceneName = SceneManager.GetActiveScene().name;
-        SceneManager.LoadScene(currentSceneName);
+        if (_currentHealth <= 0) SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

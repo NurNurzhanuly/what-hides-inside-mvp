@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class LightHazard : MonoBehaviour
 {
-    public float damageIntensity = 20f;
+    public float damageIntensity = 35f;
 
     private void OnTriggerStay2D(Collider2D other)
     {
