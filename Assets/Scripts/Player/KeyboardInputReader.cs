@@ -7,6 +7,11 @@ public class KeyboardInputReader : MonoBehaviour, IInputProvider
         return Input.GetAxisRaw("Horizontal");
     }
 
+    public float GetVerticalInput()
+    {
+        return Input.GetAxisRaw("Vertical");
+    }
+
     public bool IsJumpPressed()
     {
         return Input.GetButtonDown("Jump");

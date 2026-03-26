@@ -4,6 +4,7 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 8f;
+    public float climbSpeed = 5f;
     public float jumpForce = 12f;
     public LayerMask groundLayer;
     
@@ -11,7 +12,9 @@ public class PlayerMovement : MonoBehaviour
     private BoxCollider2D _coll;
     private IInputProvider _input;
     private bool _isDragging = false;
+    private bool _isOnLadder = false;
     private float _moveX;
+    private float _defaultGravity;
 
     void Awake()
     {
@@ -19,7 +22,8 @@ public class PlayerMovement : MonoBehaviour
         _coll = GetComponent<BoxCollider2D>();
         _input = GetComponent<IInputProvider>();
         
-        _rb.gravityScale = 4f; 
+        _defaultGravity = 4f;
+        _rb.gravityScale = _defaultGravity; 
         _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         _rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
@@ -30,16 +34,37 @@ public class PlayerMovement : MonoBehaviour
 
         _moveX = _input.GetHorizontalInput();
 
-        if (_input.IsJumpPressed() && IsGrounded() && !_isDragging)
+        if (_input.IsJumpPressed() && !_isDragging)
         {
-            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
+            if (IsGrounded() || _isOnLadder)
+            {
+                if (_isOnLadder) SetOnLadder(false);
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
+            }
         }
     }
 
     void FixedUpdate()
     {
-        float speed = _isDragging ? moveSpeed * 0.5f : moveSpeed;
-        _rb.linearVelocity = new Vector2(_moveX * speed, _rb.linearVelocity.y);
+        if (_input == null) return;
+
+        if (_isOnLadder)
+        {
+            float v = _input.GetVerticalInput();
+            _rb.linearVelocity = new Vector2(_moveX * moveSpeed * 0.5f, v * climbSpeed);
+        }
+        else
+        {
+            float speed = _isDragging ? moveSpeed * 0.5f : moveSpeed;
+            _rb.linearVelocity = new Vector2(_moveX * speed, _rb.linearVelocity.y);
+        }
+    }
+
+    public void SetOnLadder(bool state)
+    {
+        _isOnLadder = state;
+        _rb.gravityScale = state ? 0 : _defaultGravity;
+        if (state) _rb.linearVelocity = Vector2.zero;
     }
 
     public void SetDragging(bool state)
