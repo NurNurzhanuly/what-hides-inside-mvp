@@ -1,17 +1,19 @@
 using UnityEngine;
 
-// Этот скрипт реализует интерфейс IInputProvider
 public class KeyboardInputReader : MonoBehaviour, IInputProvider
 {
-    // Метод выдает вектор движения (влево/вправо)
-    public Vector2 GetMoveDirection() 
+    public float GetHorizontalInput()
     {
-        return new Vector2(Input.GetAxisRaw("Horizontal"), 0);
+        return Input.GetAxisRaw("Horizontal");
     }
 
-    // Метод выдает true, если нажат Пробел
-    public bool IsJumpPressed() 
+    public bool IsJumpPressed()
     {
         return Input.GetButtonDown("Jump");
+    }
+
+    public bool IsInteractPressed()
+    {
+        return Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.LeftControl);
     }
 }

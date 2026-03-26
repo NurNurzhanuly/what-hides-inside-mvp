@@ -2,6 +2,7 @@ using UnityEngine;
 
 public interface IInputProvider
 {
-    Vector2 GetMoveDirection();
+    float GetHorizontalInput();
     bool IsJumpPressed();
+    bool IsInteractPressed();
 }

@@ -8,16 +8,13 @@ public class PlayerVisuals : MonoBehaviour
     void Awake()
     {
         _rb = GetComponentInParent<Rigidbody2D>();
-        // Запоминаем размер, который ты выставила в инспекторе до начала игры
         _initialScale = transform.localScale;
     }
 
     void Update()
     {
         if (_rb == null) return;
-
         float speed = Mathf.Abs(_rb.linearVelocity.x);
-
         if (speed > 0.1f)
         {
             float dir = Mathf.Sign(_rb.linearVelocity.x);
