@@ -3,13 +3,15 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
-    public float moveSpeed = 7f;
+    public float moveSpeed = 8f;
     public float jumpForce = 12f;
     public LayerMask groundLayer;
-
+    
     private Rigidbody2D _rb;
     private BoxCollider2D _coll;
     private IInputProvider _input;
+    private bool _isDragging = false;
+    private float _moveX;
 
     void Awake()
     {
@@ -17,13 +19,18 @@ public class PlayerMovement : MonoBehaviour
         _coll = GetComponent<BoxCollider2D>();
         _input = GetComponent<IInputProvider>();
         
-        _rb.gravityScale = 3.5f; 
+        _rb.gravityScale = 4f; 
         _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        _rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
 
     void Update()
     {
-        if (_input != null && _input.IsJumpPressed() && IsGrounded())
+        if (_input == null) return;
+
+        _moveX = _input.GetHorizontalInput();
+
+        if (_input.IsJumpPressed() && IsGrounded() && !_isDragging)
         {
             _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
         }
@@ -31,15 +38,13 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (_input == null) return;
+        float speed = _isDragging ? moveSpeed * 0.5f : moveSpeed;
+        _rb.linearVelocity = new Vector2(_moveX * speed, _rb.linearVelocity.y);
+    }
 
-        float moveX = _input.GetHorizontalInput();
-        float targetSpeed = moveX * moveSpeed;
-        
-        float accel = IsGrounded() ? 12f : 4f;
-        float newX = Mathf.Lerp(_rb.linearVelocity.x, targetSpeed, accel * Time.fixedDeltaTime);
-        
-        _rb.linearVelocity = new Vector2(newX, _rb.linearVelocity.y);
+    public void SetDragging(bool state)
+    {
+        _isDragging = state;
     }
 
     private bool IsGrounded()
