@@ -12,7 +12,6 @@ public class PlayerDeath : MonoBehaviour, IDamageable
     private void Die()
     {
         Debug.Log("PlayerDeath.Die() -> restarting level");
-        // Небольшая пауза, чтобы увидеть эффект перед перезагрузкой
         Invoke(nameof(RestartLevel), 0.15f);
     }
 
