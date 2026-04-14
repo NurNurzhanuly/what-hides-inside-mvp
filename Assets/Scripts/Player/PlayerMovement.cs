@@ -50,13 +50,10 @@ public class PlayerMovement : MonoBehaviour
 
         if (_isOnRope && _activeRopeSegment != null)
         {
-            // ПЛАВНОСТЬ: тянем игрока к сегменту через MovePosition
             _rb.MovePosition(Vector2.Lerp(_rb.position, _activeRopeSegment.position, 20f * Time.fixedDeltaTime));
             
-            // РАСКАЧИВАНИЕ
             _activeRopeSegment.AddForce(new Vector2(h * swingForce, 0));
 
-            // ЛАЗАНИЕ (W/S)
             if (_climbCooldown > 0) _climbCooldown -= Time.fixedDeltaTime;
             if (Mathf.Abs(v) > 0.1f && _climbCooldown <= 0)
             {
@@ -76,19 +73,16 @@ public class PlayerMovement : MonoBehaviour
 
     private void TrySwitchSegment(float direction)
     {
-        // Ищем сегмент в радиусе 0.8 метров от текущего
         float offset = direction > 0 ? 0.7f : -0.7f;
         Vector2 checkPoint = (Vector2)_activeRopeSegment.position + Vector2.up * offset;
         
-        // Рисуем невидимую сферу поиска
         Collider2D[] hits = Physics2D.OverlapCircleAll(checkPoint, 0.6f);
         foreach (var hit in hits)
         {
-            // Находим объект с тегом Rope, который не является текущим звеном
             if (hit.gameObject != _activeRopeSegment.gameObject && hit.CompareTag("Rope"))
             {
                 _activeRopeSegment = hit.GetComponent<Rigidbody2D>();
-                _climbCooldown = 0.15f; // Небольшая пауза между перехватами для плавности
+                _climbCooldown = 0.15f; 
                 return;
             }
         }
