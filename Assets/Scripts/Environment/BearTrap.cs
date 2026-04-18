@@ -23,19 +23,16 @@ public class BearTrap : MonoBehaviour
         _audio = GetComponent<AudioSource>();
         _coll = GetComponent<Collider2D>();
 
+        // Убедитесь, что в инспекторе Is Trigger УЖЕ включен!
         if (_sr != null && openSprite != null) _sr.sprite = openSprite;
-
-        if (_coll != null)
-        {
-            _coll.isTrigger = true; // рекомендовано: один триггерный коллайдер для активации ловушки
-        }
     }
 
     private void HandleHit(GameObject hitObject)
     {
         if (_isSprung) return;
-
         if (hitObject == null) return;
+
+        Debug.Log($"BearTrap: Detected {hitObject.name}"); // Добавили лог
 
         IDamageable damageable = hitObject.GetComponent<IDamageable>() ?? hitObject.GetComponentInParent<IDamageable>() ?? hitObject.GetComponentInChildren<IDamageable>();
         if (damageable != null)
@@ -54,12 +51,11 @@ public class BearTrap : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        HandleHit(collision.gameObject);
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        HandleHit(collision.gameObject);
+        // Проверяем теги, как договаривались
+        if (collision.CompareTag("Player") || collision.CompareTag("Interactable"))
+        {
+            HandleHit(collision.gameObject);
+        }
     }
 
     private void Snap()
@@ -67,14 +63,9 @@ public class BearTrap : MonoBehaviour
         _isSprung = true;
         if (_sr != null && closedSprite != null) _sr.sprite = closedSprite;
         if (_audio != null && snapSound != null) _audio.PlayOneShot(snapSound);
-
-        if (_coll != null)
-        {
-            _coll.enabled = false;
-        }
-
-        // избегаем случайного смещения, если это ломает позицию
-        // transform.position += new Vector3(0.02f, 0, 0);
+        
+        // Отключаем коллайдер, чтобы игрок мог пройти сквозь закрытый капкан
+        if (_coll != null) _coll.enabled = false;
 
         Logger.Instance?.Log("BearTrap snapped");
     }
