@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5082851299435601592}
   - component: {fileID: 5222595145253195006}
   - component: {fileID: 4552474091573977683}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: FuseBox_v1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -166,7 +166,7 @@ GameObject:
   - component: {fileID: 1660205031647406605}
   - component: {fileID: 7560061875945095747}
   - component: {fileID: 7331801727028280555}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Claw_v2
   m_TagString: Untagged
   m_Icon: {fileID: 0}

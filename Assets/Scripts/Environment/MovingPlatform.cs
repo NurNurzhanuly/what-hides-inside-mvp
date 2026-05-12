@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class MovingPlatform : TriggerableObject
 {
@@ -8,10 +9,15 @@ public class MovingPlatform : TriggerableObject
     private Vector3 _targetPos;
     private bool _isActive = false;
 
+    // Список всех пассажиров на платформе
+    private List<Transform> _passengers = new List<Transform>();
+    private Vector3 _previousPos;
+
     void Awake()
     {
         _startPos = transform.position;
         _targetPos = _startPos + targetOffset;
+        _previousPos = transform.position;
     }
 
     public override void Activate() => _isActive = true;
@@ -21,15 +27,33 @@ public class MovingPlatform : TriggerableObject
     {
         Vector3 destination = _isActive ? _targetPos : _startPos;
         transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);
+        
+        // Вычисляем вектор смещения платформы в этом кадре
+        Vector3 delta = transform.position - _previousPos;
+        
+        // Двигаем всех пассажиров вместе с платформой вручную (без SetParent!)
+        for (int i = _passengers.Count - 1; i >= 0; i--)
+        {
+            if (_passengers[i] != null)
+            {
+                _passengers[i].position += delta;
+            }
+            else
+            {
+                _passengers.RemoveAt(i);
+            }
+        }
+        
+        _previousPos = transform.position;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            if (collision.gameObject.activeInHierarchy)
+            if (!_passengers.Contains(collision.transform))
             {
-                collision.transform.SetParent(transform, true);
+                _passengers.Add(collision.transform);
             }
         }
     }
@@ -38,19 +62,10 @@ public class MovingPlatform : TriggerableObject
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            if (collision.gameObject.activeInHierarchy)
+            if (_passengers.Contains(collision.transform))
             {
-                collision.transform.SetParent(null);
+                _passengers.Remove(collision.transform);
             }
-        }
-    }
-    
-    private void OnDisable()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null && player.transform.parent == transform)
-        {
-            player.transform.SetParent(null);
         }
     }
 }
