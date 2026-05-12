@@ -9,11 +9,13 @@ public class PlayerInteraction : MonoBehaviour
     private IInputProvider _input;
     private FixedJoint2D _joint;
     private GameObject _currentObject;
+    private PlayerMovement _movement; // Добавили ссылку
 
     void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _input = GetComponent<IInputProvider>();
+        _movement = GetComponent<PlayerMovement>(); // Находим скрипт движения
     }
 
     void Update()
@@ -41,6 +43,9 @@ public class PlayerInteraction : MonoBehaviour
             _joint = gameObject.AddComponent<FixedJoint2D>();
             _joint.connectedBody = _currentObject.GetComponent<Rigidbody2D>();
             _joint.breakForce = Mathf.Infinity;
+            
+            // ГОВОРИМ ДВИЖЕНИЮ, ЧТО МЫ ТАЩИМ ЯЩИК!
+            if (_movement != null) _movement.SetDragging(true);
         }
     }
 
@@ -49,5 +54,8 @@ public class PlayerInteraction : MonoBehaviour
         Destroy(_joint);
         _joint = null;
         _currentObject = null;
+        
+        // ГОВОРИМ ДВИЖЕНИЮ, ЧТО МЫ ОТПУСТИЛИ ЯЩИК
+        if (_movement != null) _movement.SetDragging(false);
     }
 }
