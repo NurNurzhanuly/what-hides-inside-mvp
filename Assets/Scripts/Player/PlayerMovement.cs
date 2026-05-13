@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 7f;
@@ -51,7 +52,6 @@ public class PlayerMovement : MonoBehaviour
         if (_isOnRope && _activeRopeSegment != null)
         {
             _rb.MovePosition(Vector2.Lerp(_rb.position, _activeRopeSegment.position, 20f * Time.fixedDeltaTime));
-            
             _activeRopeSegment.AddForce(new Vector2(h * swingForce, 0));
 
             if (_climbCooldown > 0) _climbCooldown -= Time.fixedDeltaTime;
