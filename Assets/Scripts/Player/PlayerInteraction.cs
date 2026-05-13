@@ -2,10 +2,9 @@ using UnityEngine;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    public float checkDistance = 0.5f;
+    public float checkDistance = 0.8f;
     public LayerMask interactableLayer;
     
-    private Rigidbody2D _rb;
     private IInputProvider _input;
     private FixedJoint2D _joint;
     private GameObject _currentObject;
@@ -13,7 +12,6 @@ public class PlayerInteraction : MonoBehaviour
 
     void Awake()
     {
-        _rb = GetComponent<Rigidbody2D>();
         _input = GetComponent<IInputProvider>();
         _movement = GetComponent<PlayerMovement>(); // Находим скрипт движения
     }
@@ -26,7 +24,7 @@ public class PlayerInteraction : MonoBehaviour
         {
             if (_joint == null) TryGrab();
         }
-        else
+        else 
         {
             if (_joint != null) Release();
         }
@@ -39,7 +37,6 @@ public class PlayerInteraction : MonoBehaviour
 
         if (hit.collider != null)
         {
-            _currentObject = hit.collider.gameObject;
             _joint = gameObject.AddComponent<FixedJoint2D>();
             _joint.connectedBody = _currentObject.GetComponent<Rigidbody2D>();
             _joint.breakForce = Mathf.Infinity;
