@@ -354,10 +354,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 4
+  climbSpeed: 5
   jumpForce: 12
+  swingForce: 45
   groundLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 192
 --- !u!212 &7652156018540452904
 SpriteRenderer:
   serializedVersion: 2

@@ -17,16 +17,16 @@ public class RotatingSaw : MonoBehaviour
         _endPos = _startPos + targetOffset;
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+        transform.Rotate(0, 0, rotationSpeed * Time.fixedDeltaTime);
 
         if (isPatrolling)
         {
             Vector3 target = _movingToEnd ? _endPos : _startPos;
-            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.fixedDeltaTime);
 
-            if (Vector3.Distance(transform.position, target) < 0.01f)
+            if (Vector3.Distance(transform.position, target) < 0.05f)
             {
                 _movingToEnd = !_movingToEnd;
             }

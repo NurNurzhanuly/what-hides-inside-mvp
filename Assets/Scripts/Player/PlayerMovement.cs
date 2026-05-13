@@ -7,6 +7,11 @@ public class PlayerMovement : MonoBehaviour
     public float climbSpeed = 5f;
     public float jumpForce = 11f;
     public float swingForce = 45f;
+    
+    [Header("Dragging")]
+    [Range(0.1f, 1f)]
+    public float dragSpeedMultiplier = 0.8f; // Настрой ползунок в инспекторе (0.8 = 80% от обычной скорости)
+
     public LayerMask groundLayer;
     
     private Rigidbody2D _rb;
@@ -18,6 +23,7 @@ public class PlayerMovement : MonoBehaviour
     private bool _isOnRope = false;
     private Rigidbody2D _activeRopeSegment;
     private float _climbCooldown = 0f;
+    private readonly Collider2D[] _overlapResults = new Collider2D[5];
 
     void Awake()
     {
@@ -66,7 +72,8 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            float speed = _isDragging ? moveSpeed * 0.4f : moveSpeed;
+            // Здесь теперь используется наша новая переменная dragSpeedMultiplier
+            float speed = _isDragging ? moveSpeed * dragSpeedMultiplier : moveSpeed;
             _rb.linearVelocity = new Vector2(h * speed, _rb.linearVelocity.y);
         }
     }
@@ -76,9 +83,11 @@ public class PlayerMovement : MonoBehaviour
         float offset = direction > 0 ? 0.7f : -0.7f;
         Vector2 checkPoint = (Vector2)_activeRopeSegment.position + Vector2.up * offset;
         
-        Collider2D[] hits = Physics2D.OverlapCircleAll(checkPoint, 0.6f);
-        foreach (var hit in hits)
+        int hitCount = Physics2D.OverlapCircleNonAlloc(checkPoint, 0.6f, _overlapResults);
+        
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider2D hit = _overlapResults[i];
             if (hit.gameObject != _activeRopeSegment.gameObject && hit.CompareTag("Rope"))
             {
                 _activeRopeSegment = hit.GetComponent<Rigidbody2D>();

@@ -19,6 +19,7 @@ public class KeyboardInputReader : MonoBehaviour, IInputProvider
 
     public bool IsInteractPressed()
     {
+
         return Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.LeftControl);
     }
 }
