@@ -8,12 +8,12 @@ public class PlayerInteraction : MonoBehaviour
     private IInputProvider _input;
     private FixedJoint2D _joint;
     private GameObject _currentObject;
-    private PlayerMovement _movement; // Добавили ссылку
+    private PlayerMovement _movement;
 
     void Awake()
     {
         _input = GetComponent<IInputProvider>();
-        _movement = GetComponent<PlayerMovement>(); // Находим скрипт движения
+        _movement = GetComponent<PlayerMovement>();
     }
 
     void Update()
@@ -37,22 +37,26 @@ public class PlayerInteraction : MonoBehaviour
 
         if (hit.collider != null)
         {
-            _joint = gameObject.AddComponent<FixedJoint2D>();
-            _joint.connectedBody = _currentObject.GetComponent<Rigidbody2D>();
-            _joint.breakForce = Mathf.Infinity;
-            
-            // ГОВОРИМ ДВИЖЕНИЮ, ЧТО МЫ ТАЩИМ ЯЩИК!
-            if (_movement != null) _movement.SetDragging(true);
+            _currentObject = hit.collider.gameObject; // ОШИБКА БЫЛА ЗДЕСЬ. Теперь мы запоминаем объект
+            Rigidbody2D targetRb = _currentObject.GetComponent<Rigidbody2D>();
+
+            if (targetRb != null)
+            {
+                _joint = gameObject.AddComponent<FixedJoint2D>();
+                _joint.connectedBody = targetRb;
+                _joint.breakForce = Mathf.Infinity;
+                
+                if (_movement != null) _movement.SetDragging(true);
+            }
         }
     }
 
     private void Release()
     {
-        Destroy(_joint);
+        if (_joint != null) Destroy(_joint);
         _joint = null;
         _currentObject = null;
         
-        // ГОВОРИМ ДВИЖЕНИЮ, ЧТО МЫ ОТПУСТИЛИ ЯЩИК
         if (_movement != null) _movement.SetDragging(false);
     }
 }
