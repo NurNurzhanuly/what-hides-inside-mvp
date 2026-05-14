@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3910459940910951549}
   - component: {fileID: 8323475676525077195}
   m_Layer: 6
-  m_Name: GroundWithGrass
+  m_Name: GroundWall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86,11 +86,10 @@ SpriteShapeRenderer:
   m_MaskInteraction: 0
   m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_ShapeTexture: {fileID: 2800000, guid: 1fd9cb31a49833e47be8dc0ad611245f, type: 3}
-  m_Sprites:
-  - {fileID: 1576394964181513392, guid: c0d42c50693161c45a5c6c49820969aa, type: 3}
+  m_Sprites: []
   m_LocalAABB:
-    m_Center: {x: -4.144313, y: -1.5840855, z: 0}
-    m_Extent: {x: 8.52343, y: 3.8152866, z: 0}
+    m_Center: {x: -4.144313, y: -2.13657, z: 0}
+    m_Extent: {x: 8.515125, y: 3.2628021, z: 0}
   m_SpriteSortPoint: 0
 --- !u!114 &3910459940910951549
 MonoBehaviour:
@@ -139,7 +138,7 @@ MonoBehaviour:
       spriteIndex: 0
       corner: 1
       m_CornerMode: 1
-  m_SpriteShape: {fileID: 11400000, guid: c4da7dec88d5f884f99e444ee47ff5ed, type: 2}
+  m_SpriteShape: {fileID: 11400000, guid: feb10cb7b2f931c48b2a4e582b9e2a8e, type: 2}
   m_FillPixelPerUnit: 256
   m_StretchTiling: 1
   m_SplineDetail: 16
@@ -162,8 +161,8 @@ MonoBehaviour:
   m_Modifiers: []
   m_ColliderSegment:
   - {x: -12.574821, y: -5.35458}
-  - {x: -12.659455, y: 1.1240222}
-  - {x: 4.370795, y: 0.99602395}
+  - {x: -12.659438, y: 1.1262321}
+  - {x: 4.3708115, y: 0.9982338}
   - {x: 4.313446, y: -5.399372}
   - {x: -12.574821, y: -5.35458}
   m_ShadowSegment: []
@@ -214,8 +213,8 @@ PolygonCollider2D:
   m_Points:
     m_Paths:
     - - {x: -12.574821, y: -5.35458}
-      - {x: -12.659455, y: 1.1240222}
-      - {x: 4.370795, y: 0.99602395}
+      - {x: -12.659438, y: 1.1262321}
+      - {x: 4.3708115, y: 0.9982338}
       - {x: 4.313446, y: -5.399372}
       - {x: -12.574821, y: -5.35458}
   m_UseDelaunayMesh: 1
