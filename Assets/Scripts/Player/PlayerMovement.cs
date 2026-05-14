@@ -10,7 +10,11 @@ public class PlayerMovement : MonoBehaviour
     
     [Header("Dragging")]
     [Range(0.1f, 1f)]
-    public float dragSpeedMultiplier = 0.8f; // Настрой ползунок в инспекторе (0.8 = 80% от обычной скорости)
+    public float dragSpeedMultiplier = 0.8f;
+
+    [Header("Limbo Physics")]
+    public float coyoteTime = 0.15f;
+    public float fallGravityMultiplier = 2f;
 
     public LayerMask groundLayer;
     
@@ -25,26 +29,34 @@ public class PlayerMovement : MonoBehaviour
     private float _climbCooldown = 0f;
     private readonly Collider2D[] _overlapResults = new Collider2D[5];
 
+    private float _coyoteTimeCounter;
+    private float _defaultGravity;
+
     void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _coll = GetComponent<BoxCollider2D>();
         _input = GetComponent<IInputProvider>();
         _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        _defaultGravity = _rb.gravityScale;
     }
 
     void Update()
     {
         if (_input == null) return;
 
-        if (_input.IsJumpPressed())
+        if (IsGrounded() || _isOnLadder || _isOnRope)
+            _coyoteTimeCounter = coyoteTime;
+        else
+            _coyoteTimeCounter -= Time.deltaTime;
+
+        if (_input.IsJumpPressed() && _coyoteTimeCounter > 0f)
         {
-            if (IsGrounded() || _isOnLadder || _isOnRope)
-            {
-                if (_isOnRope) SetOnRope(false, null);
-                if (_isOnLadder) SetOnLadder(false);
-                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
-            }
+            if (_isOnRope) SetOnRope(false, null);
+            if (_isOnLadder) SetOnLadder(false);
+            
+            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
+            _coyoteTimeCounter = 0f;
         }
     }
 
@@ -55,6 +67,11 @@ public class PlayerMovement : MonoBehaviour
         float h = _input.GetHorizontalInput();
         float v = _input.GetVerticalInput();
 
+        if (_rb.linearVelocity.y < 0 && !_isOnLadder && !_isOnRope)
+            _rb.gravityScale = _defaultGravity * fallGravityMultiplier;
+        else
+            _rb.gravityScale = _defaultGravity;
+
         if (_isOnRope && _activeRopeSegment != null)
         {
             _rb.MovePosition(Vector2.Lerp(_rb.position, _activeRopeSegment.position, 20f * Time.fixedDeltaTime));
@@ -62,9 +79,7 @@ public class PlayerMovement : MonoBehaviour
 
             if (_climbCooldown > 0) _climbCooldown -= Time.fixedDeltaTime;
             if (Mathf.Abs(v) > 0.1f && _climbCooldown <= 0)
-            {
                 TrySwitchSegment(v);
-            }
         }
         else if (_isOnLadder)
         {
@@ -72,7 +87,6 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            // Здесь теперь используется наша новая переменная dragSpeedMultiplier
             float speed = _isDragging ? moveSpeed * dragSpeedMultiplier : moveSpeed;
             _rb.linearVelocity = new Vector2(h * speed, _rb.linearVelocity.y);
         }
@@ -82,7 +96,6 @@ public class PlayerMovement : MonoBehaviour
     {
         float offset = direction > 0 ? 0.7f : -0.7f;
         Vector2 checkPoint = (Vector2)_activeRopeSegment.position + Vector2.up * offset;
-        
         int hitCount = Physics2D.OverlapCircleNonAlloc(checkPoint, 0.6f, _overlapResults);
         
         for (int i = 0; i < hitCount; i++)
@@ -122,5 +135,5 @@ public class PlayerMovement : MonoBehaviour
 
     public void SetDragging(bool state) => _isDragging = state;
 
-    private bool IsGrounded() => Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
+    public bool IsGrounded() => Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
 }
