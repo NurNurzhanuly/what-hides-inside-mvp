@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Trap
   - Rope
+  - Interactable
   layers:
   - Default
   - TransparentFX
