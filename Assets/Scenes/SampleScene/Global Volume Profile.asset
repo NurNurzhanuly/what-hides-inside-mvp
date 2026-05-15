@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Global Volume Profile
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
+  - {fileID: 7504835798871904539}
   - {fileID: 3631838920512166297}
   - {fileID: 4978457798840337865}
   - {fileID: 552386479118554489}
-  - {fileID: 7504835798871904539}
   - {fileID: 1909258783088382278}
 --- !u!114 &552386479118554489
 MonoBehaviour:
@@ -155,7 +155,7 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 0.1
+    m_Value: 0
   contrast:
     m_OverrideState: 1
     m_Value: 16
