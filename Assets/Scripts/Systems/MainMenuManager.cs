@@ -12,7 +12,6 @@ public class MainMenuManager : MonoBehaviour
     [Header("Элементы UI")]
     public CanvasGroup menuCanvasGroup;       
     public GameObject menuFrameImage;         
-    public GameObject settingsPanel;          
     public float fadeDuration = 2f;           
 
     [Header("Настройки Камер")]
@@ -27,59 +26,39 @@ public class MainMenuManager : MonoBehaviour
 
     void Start()
     {
-        // Проверяем: игрок возрождается после смерти?
         bool isRespawningNow = SaveManager.Instance != null && SaveManager.Instance.isRespawning;
 
-        // Если это быстрый тест ИЛИ мы возрождаемся -> МЕНЮ НЕ ПОКАЗЫВАЕМ!
         if (skipMenuForTesting || isRespawningNow)
         {
-            Debug.Log($"[MainMenu] Быстрый старт. isRespawning: {isRespawningNow}");
-            
-            // 1. Сбрасываем флаг, чтобы он не мешал при следующем заходе в игру
             if (isRespawningNow) SaveManager.Instance.isRespawning = false;
 
-            // 2. ЖЕСТКО отключаем ВСЁ меню, чтобы оно не висело на экране
             if (menuCanvasGroup != null) menuCanvasGroup.gameObject.SetActive(false);
             if (menuFrameImage != null) menuFrameImage.SetActive(false);
-            if (settingsPanel != null) settingsPanel.SetActive(false);
             
-            // 3. Камера смотрит на игрока
             if (menuCam != null) menuCam.Priority = 0;
 
-            // 4. Настраиваем игрока
             if (playerMovement != null)
             {
-                // Если возрождаемся - ставим на чекпоинт
                 if (isRespawningNow && SaveManager.Instance.HasSavedGame())
                 {
                     playerMovement.transform.position = SaveManager.Instance.LoadCheckpoint(playerMovement.transform.position);
                 }
                 
                 playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0);
-                playerMovement.enabled = true; // Разрешаем бегать
+                playerMovement.enabled = true; 
             }
 
-            // 5. Высветляем черный экран после смерти
             if (isRespawningNow)
             {
                 StartCoroutine(FadeInFromBlack());
             }
-
-            return; // ОБРЫВАЕМ функцию Start! Код ниже не выполнится.
+            return; 
         }
 
-        // НОРМАЛЬНЫЙ СТАРТ (Игрок только запустил игру)
-        Debug.Log("[MainMenu] Нормальный старт меню.");
-        
-        // Включаем главное меню, рамку, выключаем настройки
-        if (menuCanvasGroup != null) menuCanvasGroup.gameObject.SetActive(true);
+        // НОРМАЛЬНЫЙ СТАРТ
         if (menuFrameImage != null) menuFrameImage.SetActive(true);
-        if (settingsPanel != null) settingsPanel.SetActive(false);
-        
-        // Включаем камеру меню
         if (menuCam != null) menuCam.Priority = 20;
 
-        // Укладываем игрока
         if (playerMovement != null)
         {
             playerMovement.enabled = false;
@@ -93,27 +72,20 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
-    // КНОПКА: NEW GAME
     public void OnPlayClicked()
     {
         if (SaveManager.Instance != null) SaveManager.Instance.ClearSave();
         StartCoroutine(StartGameRoutine(false));
     }
 
-    // КНОПКА: LOAD GAME
     public void OnLoadClicked()
     {
         if (SaveManager.Instance != null && SaveManager.Instance.HasSavedGame())
         {
             StartCoroutine(StartGameRoutine(true));
         }
-        else
-        {
-            Debug.LogWarning("Сохранений нет!");
-        }
     }
 
-    // ОБЩАЯ КОРУТИНА СТАРТА ИЗ МЕНЮ
     private IEnumerator StartGameRoutine(bool isLoadingSave)
     {
         if (menuCanvasGroup != null)
@@ -198,26 +170,23 @@ public class MainMenuManager : MonoBehaviour
             fadeImage.color = new Color(0, 0, 0, alpha);
             yield return null;
         }
-
         Destroy(canvasObj);
     }
 
-    // КНОПКИ НАСТРОЕК (SETTINGS / BACK)
+    // Прячет кнопки меню, когда мы открываем Настройки
     public void OnSettingsClicked()
     {
         if (menuFrameImage != null) menuFrameImage.SetActive(false); 
-        if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
-    public void OnBackClicked()
+    // Эту функцию (возврат кнопок меню) теперь должен вызывать скрипт SettingsMenu!
+    public void ShowMenuButtons()
     {
-        if (settingsPanel != null) settingsPanel.SetActive(false);
         if (menuFrameImage != null) menuFrameImage.SetActive(true); 
     }
 
     public void OnExitClicked()
     {
-        Debug.Log("Игрок нажал EXIT. Выход из игры...");
         Application.Quit();
     }
 }
