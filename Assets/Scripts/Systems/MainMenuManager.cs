@@ -5,11 +5,15 @@ using Cinemachine;
 public class MainMenuManager : MonoBehaviour
 {
     [Header("Элементы UI")]
-    public CanvasGroup menuCanvasGroup;       // Весь холст меню (для затухания)
-    public GameObject mainButtonsPanel;       // Контейнер с кнопками (MenuContainer)
-    public GameObject menuFrameImage;         // Отдельная фоновая рамка кнопок (FrameImage)
-    public GameObject settingsPanel;          // Панель настроек (SettingsPanel)
-    public float fadeDuration = 2f;
+    public CanvasGroup menuCanvasGroup;       // Весь холст меню (для плавного растворения при старте)
+    
+    [Tooltip("Перетащи сюда FrameImage (родительский объект для рамки и кнопок)")]
+    public GameObject menuFrameImage;         // Главный блок меню
+    
+    [Tooltip("Перетащи сюда SettingsPanel")]
+    public GameObject settingsPanel;          // Окно настроек
+    
+    public float fadeDuration = 2f;           // Скорость растворения меню при старте
 
     [Header("Настройки Камер")]
     public CinemachineVirtualCamera menuCam;
@@ -23,12 +27,11 @@ public class MainMenuManager : MonoBehaviour
 
     void Start()
     {
-        // 1. Убеждаемся, что включено именно Главное Меню и его рамка, а настройки скрыты
-        if (mainButtonsPanel != null) mainButtonsPanel.SetActive(true);
+        // 1. Включаем Главное Меню, прячем Настройки
         if (menuFrameImage != null) menuFrameImage.SetActive(true);
         if (settingsPanel != null) settingsPanel.SetActive(false);
 
-        // 2. Включаем камеру меню
+        // 2. Активируем камеру меню
         if (menuCam != null) menuCam.Priority = 20;
 
         // 3. Укладываем игрока на землю и отбираем управление
@@ -53,27 +56,32 @@ public class MainMenuManager : MonoBehaviour
 
     private IEnumerator StartGameRoutine()
     {
-        menuCanvasGroup.interactable = false;
-        menuCanvasGroup.blocksRaycasts = false;
+        // Блокируем клики, чтобы игрок не нажал ничего в процессе
+        if (menuCanvasGroup != null)
+        {
+            menuCanvasGroup.interactable = false;
+            menuCanvasGroup.blocksRaycasts = false;
+        }
 
-        // Камера летит к игроку
+        // Камера плавно летит к игроку
         if (menuCam != null) menuCam.Priority = 0;
 
-        // Игрок встает
+        // Игрок начинает вставать
         StartCoroutine(StandUpPlayer());
 
-        // Меню растворяется
-        float elapsed = 0f;
-        while (elapsed < fadeDuration)
+        // Меню плавно растворяется
+        if (menuCanvasGroup != null)
         {
-            elapsed += Time.deltaTime;
-            menuCanvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
-            yield return null;
+            float elapsed = 0f;
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                menuCanvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
+                yield return null;
+            }
+            menuCanvasGroup.alpha = 0f;
+            menuCanvasGroup.gameObject.SetActive(false); // Выключаем Canvas для оптимизации
         }
-        menuCanvasGroup.alpha = 0f;
-
-        // Выключаем UI для оптимизации
-        menuCanvasGroup.gameObject.SetActive(false);
     }
 
     private IEnumerator StandUpPlayer()
@@ -94,24 +102,26 @@ public class MainMenuManager : MonoBehaviour
         }
 
         playerTransform.rotation = Quaternion.Euler(0, 0, 0);
-        playerMovement.enabled = true;
+        playerMovement.enabled = true; // Возвращаем управление!
     }
 
     // КНОПКИ НАСТРОЕК (SETTINGS / BACK)
     public void OnSettingsClicked()
     {
-        if (mainButtonsPanel != null) mainButtonsPanel.SetActive(false);
-        if (menuFrameImage != null) menuFrameImage.SetActive(false); // Прячем рамку
+        // Прячем главный блок (Рамку вместе с кнопками внутри)
+        if (menuFrameImage != null) menuFrameImage.SetActive(false); 
         
+        // Показываем панель настроек
         if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
     public void OnBackClicked()
     {
+        // Прячем панель настроек
         if (settingsPanel != null) settingsPanel.SetActive(false);
         
-        if (mainButtonsPanel != null) mainButtonsPanel.SetActive(true);
-        if (menuFrameImage != null) menuFrameImage.SetActive(true); // Возвращаем рамку
+        // Возвращаем главный блок (Рамку с кнопками)
+        if (menuFrameImage != null) menuFrameImage.SetActive(true); 
     }
 
     // КНОПКА: EXIT
