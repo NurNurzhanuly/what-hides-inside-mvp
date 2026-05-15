@@ -20,25 +20,26 @@ public class PlayerDeath : MonoBehaviour, IDamageable
 
     private IEnumerator DeathRoutine()
     {
+        // 1. Отключаем всё у игрока
         PlayerMovement movement = GetComponent<PlayerMovement>();
         if (movement != null) movement.enabled = false;
 
         PlayerInteraction interaction = GetComponent<PlayerInteraction>();
         if (interaction != null) interaction.enabled = false;
 
-        // ОБНУЛЯЕМ СКОРОСТЬ (чтобы он не скользил по инерции вперед, но мог упасть вниз)
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null) rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
 
-        // ОТПУСКАЕМ ЯЩИК (если держали его в момент смерти)
         FixedJoint2D joint = GetComponent<FixedJoint2D>();
         if (joint != null) Destroy(joint);
 
         CinemachineVirtualCamera cam = Object.FindFirstObjectByType<CinemachineVirtualCamera>();
         if (cam != null) cam.Follow = null;
 
+        // 2. Ждем перед затемнением
         yield return new WaitForSeconds(delayBeforeFade);
 
+        // 3. Рисуем черный экран
         GameObject canvasObj = new GameObject("FadeCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -63,6 +64,18 @@ public class PlayerDeath : MonoBehaviour, IDamageable
             yield return null;
         }
 
+        // 4. САМОЕ ВАЖНОЕ: ГОВОРИМ ИГРЕ, ЧТО МЫ ВОЗРОЖДАЕМСЯ
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.isRespawning = true;
+            Debug.Log("[PlayerDeath] Флаг возрождения установлен! Перезагружаю сцену...");
+        }
+        else
+        {
+            Debug.LogError("[PlayerDeath] ОШИБКА: SaveManager не найден на сцене!");
+        }
+
+        // 5. Перезагружаем уровень
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
