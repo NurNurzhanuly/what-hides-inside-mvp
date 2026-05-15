@@ -4,16 +4,16 @@ using Cinemachine;
 
 public class MainMenuManager : MonoBehaviour
 {
+    [Header("== DEBUG SETTINGS ==")]
+    [Tooltip("ЕСЛИ ГАЛОЧКА СТОИТ: Меню не появится, игрок сразу стоит на ногах и может бегать (для быстрого теста уровней).")]
+    public bool skipMenuForTesting = false;
+
+    [Space(10)]
     [Header("Элементы UI")]
-    public CanvasGroup menuCanvasGroup;       // Весь холст меню (для плавного растворения при старте)
-    
-    [Tooltip("Перетащи сюда FrameImage (родительский объект для рамки и кнопок)")]
-    public GameObject menuFrameImage;         // Главный блок меню
-    
-    [Tooltip("Перетащи сюда SettingsPanel")]
-    public GameObject settingsPanel;          // Окно настроек
-    
-    public float fadeDuration = 2f;           // Скорость растворения меню при старте
+    public CanvasGroup menuCanvasGroup;       // Весь холст меню
+    public GameObject menuFrameImage;         // Отдельная фоновая рамка кнопок
+    public GameObject settingsPanel;          // Панель настроек
+    public float fadeDuration = 2f;
 
     [Header("Настройки Камер")]
     public CinemachineVirtualCamera menuCam;
@@ -27,14 +27,37 @@ public class MainMenuManager : MonoBehaviour
 
     void Start()
     {
-        // 1. Включаем Главное Меню, прячем Настройки
+        // ==========================================
+        // РЕЖИМ РАЗРАБОТЧИКА (БЫСТРЫЙ ТЕСТ)
+        // ==========================================
+        if (skipMenuForTesting)
+        {
+            Debug.Log("<color=yellow>ВНИМАНИЕ: Включен режим разработчика (Skip Menu). Меню пропущено.</color>");
+            
+            // Выключаем UI
+            if (menuCanvasGroup != null) menuCanvasGroup.gameObject.SetActive(false);
+            
+            // Сбрасываем приоритет камеры меню, чтобы сразу работала игровая
+            if (menuCam != null) menuCam.Priority = 0;
+            
+            // Убеждаемся, что игрок стоит прямо и им можно управлять
+            if (playerMovement != null)
+            {
+                playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0);
+                playerMovement.enabled = true;
+            }
+            
+            return; // ОБРЫВАЕМ функцию Start! Дальше код меню не запустится.
+        }
+
+        // ==========================================
+        // НОРМАЛЬНЫЙ РЕЖИМ ИГРЫ (МЕНЮ)
+        // ==========================================
         if (menuFrameImage != null) menuFrameImage.SetActive(true);
         if (settingsPanel != null) settingsPanel.SetActive(false);
 
-        // 2. Активируем камеру меню
         if (menuCam != null) menuCam.Priority = 20;
 
-        // 3. Укладываем игрока на землю и отбираем управление
         if (playerMovement != null)
         {
             playerMovement.enabled = false;
@@ -48,7 +71,9 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
+    // ==========================================
     // КНОПКА: NEW GAME
+    // ==========================================
     public void OnPlayClicked()
     {
         StartCoroutine(StartGameRoutine());
@@ -56,20 +81,16 @@ public class MainMenuManager : MonoBehaviour
 
     private IEnumerator StartGameRoutine()
     {
-        // Блокируем клики, чтобы игрок не нажал ничего в процессе
         if (menuCanvasGroup != null)
         {
             menuCanvasGroup.interactable = false;
             menuCanvasGroup.blocksRaycasts = false;
         }
 
-        // Камера плавно летит к игроку
         if (menuCam != null) menuCam.Priority = 0;
 
-        // Игрок начинает вставать
         StartCoroutine(StandUpPlayer());
 
-        // Меню плавно растворяется
         if (menuCanvasGroup != null)
         {
             float elapsed = 0f;
@@ -80,7 +101,7 @@ public class MainMenuManager : MonoBehaviour
                 yield return null;
             }
             menuCanvasGroup.alpha = 0f;
-            menuCanvasGroup.gameObject.SetActive(false); // Выключаем Canvas для оптимизации
+            menuCanvasGroup.gameObject.SetActive(false);
         }
     }
 
@@ -102,29 +123,27 @@ public class MainMenuManager : MonoBehaviour
         }
 
         playerTransform.rotation = Quaternion.Euler(0, 0, 0);
-        playerMovement.enabled = true; // Возвращаем управление!
+        playerMovement.enabled = true;
     }
 
+    // ==========================================
     // КНОПКИ НАСТРОЕК (SETTINGS / BACK)
+    // ==========================================
     public void OnSettingsClicked()
     {
-        // Прячем главный блок (Рамку вместе с кнопками внутри)
         if (menuFrameImage != null) menuFrameImage.SetActive(false); 
-        
-        // Показываем панель настроек
         if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
     public void OnBackClicked()
     {
-        // Прячем панель настроек
         if (settingsPanel != null) settingsPanel.SetActive(false);
-        
-        // Возвращаем главный блок (Рамку с кнопками)
         if (menuFrameImage != null) menuFrameImage.SetActive(true); 
     }
 
+    // ==========================================
     // КНОПКА: EXIT
+    // ==========================================
     public void OnExitClicked()
     {
         Debug.Log("Игрок нажал EXIT. Выход из игры...");
