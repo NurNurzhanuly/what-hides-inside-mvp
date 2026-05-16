@@ -2,30 +2,40 @@ using UnityEngine;
 
 public class PlayerVisuals : MonoBehaviour
 {
-    private Rigidbody2D _rb;
+    public Animator animator;
+    public Rigidbody2D rb;
+    public PlayerMovement movement;
     private Vector3 _initialScale;
-    private FixedJoint2D _joint; 
 
     void Awake()
     {
-        _rb = GetComponentInParent<Rigidbody2D>();
+        // Ищем всё прямо на самом игроке
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (movement == null) movement = GetComponent<PlayerMovement>();
+        if (animator == null) animator = GetComponent<Animator>();
+        
         _initialScale = transform.localScale;
     }
 
     void Update()
     {
-        if (_rb == null) return;
-        
-        // Проверяем, держим ли мы сейчас ящик
-        _joint = GetComponentInParent<FixedJoint2D>();
+        if (rb == null || animator == null) return;
 
-        float speed = Mathf.Abs(_rb.linearVelocity.x);
-        
-        // ПОВОРАЧИВАЕМСЯ ТОЛЬКО ЕСЛИ НИЧЕГО НЕ ДЕРЖИМ (_joint == null)
-        if (speed > 0.1f && _joint == null)
+        // 1. Считаем скорость и отдаем Аниматору
+        float currentSpeed = Mathf.Abs(rb.linearVelocity.x);
+        animator.SetFloat("Speed", currentSpeed);
+
+        if (movement != null)
         {
-            float dir = Mathf.Sign(_rb.linearVelocity.x);
-            transform.localScale = new Vector3(dir * _initialScale.x, _initialScale.y, _initialScale.z);
+            animator.SetBool("IsGrounded", movement.IsGrounded());
+        }
+
+        // 2. Поворачиваем персонажа туда, куда он бежит
+        bool isDragging = GetComponent<FixedJoint2D>() != null;
+        if (currentSpeed > 0.1f && !isDragging)
+        {
+            float dir = Mathf.Sign(rb.linearVelocity.x);
+            transform.localScale = new Vector3(dir * Mathf.Abs(_initialScale.x), _initialScale.y, _initialScale.z);
         }
     }
 }
