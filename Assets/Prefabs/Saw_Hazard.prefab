@@ -100,10 +100,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8448768936169500440}
-  - component: {fileID: 3826059218290853077}
   - component: {fileID: 474101290449417081}
   - component: {fileID: 7963710090319120971}
   - component: {fileID: 830053130693319396}
+  - component: {fileID: 6620630987796717077}
   m_Layer: 0
   m_Name: Saw_Hazard
   m_TagString: Untagged
@@ -127,42 +127,6 @@ Transform:
   - {fileID: 1642559123508851281}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!58 &3826059218290853077
-CircleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4570837314227787229}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.014937878}
-  m_Radius: 5.205482
 --- !u!114 &474101290449417081
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -175,10 +139,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e30b6ae36bbf46e8a4688cf9333f25b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RotatingSaw
+  sawVisuals: {fileID: 1642559123508851281}
   rotationSpeed: 500
   isPatrolling: 0
   targetOffset: {x: 0, y: 0, z: 0}
   moveSpeed: 2
+  waitTimeAtEnds: 0.2
 --- !u!114 &7963710090319120971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -387,3 +353,39 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+--- !u!58 &6620630987796717077
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4570837314227787229}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 5.1
