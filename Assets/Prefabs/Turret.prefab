@@ -142,3 +142,10 @@ MonoBehaviour:
   bulletsPerBurst: 10
   timeBetweenBullets: 0.15
   spreadAngle: 1.5
+  muzzleFlashLight: {fileID: 0}
+  shootAudio: {fileID: 0}
+  shootClip: {fileID: 0}
+  detectionDistance: 15
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 1
