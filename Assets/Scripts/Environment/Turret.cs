@@ -9,17 +9,21 @@ public class Turret : MonoBehaviour
     public Transform firePoint;
     public float burstRate = 3f;            
     public int bulletsPerBurst = 10;        
+    
+    [Tooltip("Время между пулями. Скорострельность звука будет зависеть от этого параметра!")]
     public float timeBetweenBullets = 0.15f; 
     public float spreadAngle = 3f;          
 
-    [Header("Эффекты")]
+    [Header("Эффекты (Синхронные)")]
     public Light2D muzzleFlashLight; 
     public AudioSource shootAudio;   
-    public AudioClip shootClip;
+    
+    [Tooltip("ВАЖНО: Сюда нужно положить КОРОТКИЙ звук ОДНОГО выстрела, а не длинную очередь!")]
+    public AudioClip singleShotClip; 
 
     [Header("Сенсор (Лазер)")]
-    public float detectionDistance = 15f; // Длина лазера
-    public LayerMask targetLayer; // Поставь тут галочку на Player!
+    public float detectionDistance = 15f; 
+    public LayerMask targetLayer; 
 
     private bool _isPlayerDetected = false;
     private bool _isShooting = false;
@@ -31,58 +35,66 @@ public class Turret : MonoBehaviour
 
     void Update()
     {
-        // Пускаем луч (лазер) вперед из дула
         RaycastHit2D hit = Physics2D.Raycast(firePoint.position, firePoint.right, detectionDistance, targetLayer);
 
-        // Если луч попал в Игрока
         if (hit.collider != null)
         {
             if (!_isShooting)
             {
                 _isShooting = true;
-                StartCoroutine(BurstRoutine()); // Начинаем стрелять
+                StartCoroutine(BurstRoutine()); 
             }
         }
         else
         {
-            _isShooting = false; // Игрок убежал - перестаем стрелять
+            _isShooting = false; 
         }
     }
 
     private IEnumerator BurstRoutine()
     {
-        while (_isShooting) // Стреляем, ТОЛЬКО ПОКА игрок в лазере
+        while (_isShooting) 
         {
             for (int i = 0; i < bulletsPerBurst; i++)
             {
-                if (!_isShooting) break; // Прерываем очередь, если игрок ушел
+                if (!_isShooting) break; 
 
                 if (bulletPrefab != null && firePoint != null)
                 {
+                    // 1. Создаем пулю
                     float randomAngle = Random.Range(-spreadAngle, spreadAngle);
                     Quaternion rotation = firePoint.rotation * Quaternion.Euler(0, 0, randomAngle);
                     Instantiate(bulletPrefab, firePoint.position, rotation);
                     
-                    StartCoroutine(MuzzleFlashEffect());
+                    // 2. ИДЕАЛЬНАЯ СИНХРОНИЗАЦИЯ: В этот же кадр включаем звук и вспышку
+                    StartCoroutine(MuzzleFlashAndSound());
                 }
+                
+                // 3. Ждем время до следующей пули (пауза между выстрелами)
                 yield return new WaitForSeconds(timeBetweenBullets);
             }
+
             yield return new WaitForSeconds(burstRate);
         }
     }
 
-    private IEnumerator MuzzleFlashEffect()
+    private IEnumerator MuzzleFlashAndSound()
     {
-        if (shootAudio != null && shootClip != null) shootAudio.PlayOneShot(shootClip);
+        // ИГРАЕМ ОДИНОЧНЫЙ ЗВУК
+        if (shootAudio != null && singleShotClip != null) 
+        {
+            shootAudio.PlayOneShot(singleShotClip);
+        }
+
+        // МИГАЕМ СВЕТОМ
         if (muzzleFlashLight != null) 
         {
             muzzleFlashLight.intensity = 2f; 
-            yield return new WaitForSeconds(0.05f); 
+            yield return new WaitForSeconds(0.05f); // Короткая вспышка на 50 мс
             muzzleFlashLight.intensity = 0f; 
         }
     }
 
-    // Для удобства: рисуем лазер в редакторе красной линией
     private void OnDrawGizmos()
     {
         if (firePoint != null)
