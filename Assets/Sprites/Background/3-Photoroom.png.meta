@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: dbdf933ea0b364081920f7b37ce37ce8
+guid: c7fdc8a438e884944a779cd05df84ecb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3225139889593229655
-    second: Notes_260515_032154_3-Photoroom_0
+      213: 5416247237039652621
+    second: 3-Photoroom_0
+  - first:
+      213: 1294824464610867731
+    second: 3-Photoroom_1
+  - first:
+      213: 7174775664959715051
+    second: 3-Photoroom_2
+  - first:
+      213: 3136903607181257644
+    second: 3-Photoroom_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +46,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -72,10 +81,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,23 +109,89 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Notes_260515_032154_3-Photoroom_0
+      name: 3-Photoroom_0
       rect:
         serializedVersion: 2
-        x: 334
-        y: 642
-        width: 381
-        height: 299
-      alignment: 9
-      pivot: {x: 0.5992907, y: 0.057176266}
+        x: 183
+        y: 9
+        width: 324
+        height: 773
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9ae5ad1ab500e33d0800000000000000
-      internalID: -3225139889593229655
+      spriteID: d0f70736a206a2b40800000000000000
+      internalID: 5416247237039652621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 3-Photoroom_1
+      rect:
+        serializedVersion: 2
+        x: 503
+        y: 316
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31abd938df328f110800000000000000
+      internalID: 1294824464610867731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 3-Photoroom_2
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 0
+        width: 500
+        height: 988
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be67a05247ce19360800000000000000
+      internalID: 7174775664959715051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 3-Photoroom_3
+      rect:
+        serializedVersion: 2
+        x: 1263
+        y: 0
+        width: 657
+        height: 1080
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cab2ea0f535888b20800000000000000
+      internalID: 3136903607181257644
       vertices: []
       indices: 
       edges: []
@@ -125,7 +200,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 641ae02baf44f44a2a6e2ca71fbe93a3
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +210,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Notes_260515_032154_3-Photoroom_0: -3225139889593229655
+      3-Photoroom_0: 5416247237039652621
+      3-Photoroom_1: 1294824464610867731
+      3-Photoroom_2: 7174775664959715051
+      3-Photoroom_3: 3136903607181257644
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
