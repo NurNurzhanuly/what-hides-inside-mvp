@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Collider2D))]
 public class Checkpoint : MonoBehaviour
@@ -7,17 +9,21 @@ public class Checkpoint : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Если игрок коснулся чекпоинта и он еще не активирован
         if (!_isActivated && collision.CompareTag("Player"))
         {
             _isActivated = true;
             
-            // Просим SaveManager сохранить позицию ЭТОГО чекпоинта
-            // (или можно сохранять collision.transform.position - позицию самого игрока)
-            SaveManager.Instance.SaveCheckpoint(transform.position);
+            float currentExposure = 0f; // По умолчанию свет нормальный (0)
 
-            // Опционально: можно добавить визуальный эффект (например, зажечь лампочку)
-            // GetComponent<SpriteRenderer>().color = Color.green;
+            // Пытаемся найти Global Volume на сцене, чтобы узнать, насколько сейчас темно
+            Volume globalVolume = Object.FindFirstObjectByType<Volume>();
+            if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdjustments))
+            {
+                currentExposure = colorAdjustments.postExposure.value; // Читаем текущую темноту экрана!
+            }
+
+            // Передаем в Менеджер и позицию, и СВЕТ!
+            SaveManager.Instance.SaveCheckpoint(transform.position, currentExposure);
         }
     }
 }

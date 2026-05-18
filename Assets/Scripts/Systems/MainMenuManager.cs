@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using Cinemachine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class MainMenuManager : MonoBehaviour
 {
@@ -12,10 +14,12 @@ public class MainMenuManager : MonoBehaviour
     [Header("Элементы UI")]
     public CanvasGroup menuCanvasGroup;       
     public GameObject menuFrameImage;         
+    public GameObject settingsPanel;          
     public float fadeDuration = 2f;           
 
-    [Header("Настройки Камер")]
+    [Header("Настройки Камер и Света")]
     public CinemachineVirtualCamera menuCam;
+    public Volume globalVolume; // <-- НОВАЯ ССЫЛКА: ПЕРЕТАЩИ СЮДА СВОЙ GLOBAL VOLUME В ЮНИТИ!
 
     [Header("Настройки Игрока")]
     public PlayerMovement playerMovement;
@@ -34,6 +38,7 @@ public class MainMenuManager : MonoBehaviour
 
             if (menuCanvasGroup != null) menuCanvasGroup.gameObject.SetActive(false);
             if (menuFrameImage != null) menuFrameImage.SetActive(false);
+            if (settingsPanel != null) settingsPanel.SetActive(false);
             
             if (menuCam != null) menuCam.Priority = 0;
 
@@ -41,7 +46,10 @@ public class MainMenuManager : MonoBehaviour
             {
                 if (isRespawningNow && SaveManager.Instance.HasSavedGame())
                 {
-                    playerMovement.transform.position = SaveManager.Instance.LoadCheckpoint(playerMovement.transform.position);
+                    playerMovement.transform.position = SaveManager.Instance.LoadCheckpointPosition(playerMovement.transform.position);
+                    
+                    // -- ФИКС СВЕТА ПРИ РЕСПАВНЕ --
+                    RestoreSavedLight();
                 }
                 
                 playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -57,6 +65,7 @@ public class MainMenuManager : MonoBehaviour
 
         // НОРМАЛЬНЫЙ СТАРТ
         if (menuFrameImage != null) menuFrameImage.SetActive(true);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
         if (menuCam != null) menuCam.Priority = 20;
 
         if (playerMovement != null)
@@ -98,12 +107,19 @@ public class MainMenuManager : MonoBehaviour
 
         if (isLoadingSave && playerMovement != null)
         {
-            Vector2 savedPos = SaveManager.Instance.LoadCheckpoint(playerMovement.transform.position);
-            playerMovement.transform.position = savedPos;
+            playerMovement.transform.position = SaveManager.Instance.LoadCheckpointPosition(playerMovement.transform.position);
             playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0); 
+            
+            // -- ФИКС СВЕТА ПРИ ЗАГРУЗКЕ ЧЕРЕЗ LOAD GAME --
+            RestoreSavedLight();
         }
         else
         {
+            // Если Новая игра - убеждаемся, что свет на норме (0)
+            if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdj))
+            {
+                colorAdj.postExposure.value = 0f;
+            }
             yield return StartCoroutine(StandUpPlayer());
         }
 
@@ -121,6 +137,17 @@ public class MainMenuManager : MonoBehaviour
         }
 
         if (playerMovement != null) playerMovement.enabled = true;
+    }
+
+    // Функция для восстановления света
+    private void RestoreSavedLight()
+    {
+        if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdjustments))
+        {
+            float savedExposure = SaveManager.Instance.LoadCheckpointExposure(0f); // 0f - дефолтный свет
+            colorAdjustments.postExposure.value = savedExposure;
+            Debug.Log($"Свет восстановлен на уровень: {savedExposure}");
+        }
     }
 
     private IEnumerator StandUpPlayer()
@@ -173,13 +200,12 @@ public class MainMenuManager : MonoBehaviour
         Destroy(canvasObj);
     }
 
-    // Прячет кнопки меню, когда мы открываем Настройки
     public void OnSettingsClicked()
     {
         if (menuFrameImage != null) menuFrameImage.SetActive(false); 
+        if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
-    // Эту функцию (возврат кнопок меню) теперь должен вызывать скрипт SettingsMenu!
     public void ShowMenuButtons()
     {
         if (menuFrameImage != null) menuFrameImage.SetActive(true); 
@@ -188,5 +214,8 @@ public class MainMenuManager : MonoBehaviour
     public void OnExitClicked()
     {
         Application.Quit();
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #endif
     }
 }

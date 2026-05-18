@@ -8,8 +8,10 @@ public class SaveManager : MonoBehaviour
     private const string PosXKey = "PlayerPosX";
     private const string PosYKey = "PlayerPosY";
     private const string HasSaveKey = "HasSave";
+    
+    // НОВЫЙ КЛЮЧ: Запоминаем экспозицию света!
+    private const string LightExposureKey = "SavedLightExposure";
 
-    // Секретная переменная. Если true, значит игрок только что умер и сцена перезагрузилась
     [HideInInspector] 
     public bool isRespawning = false; 
 
@@ -18,7 +20,7 @@ public class SaveManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Этот объект НЕ удаляется при перезагрузке сцены
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -26,14 +28,16 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    public void SaveCheckpoint(Vector2 position)
+    // ТЕПЕРЬ МЕТОД ПРИНИМАЕТ НЕ ТОЛЬКО ПОЗИЦИЮ, НО И СВЕТ
+    public void SaveCheckpoint(Vector2 position, float currentExposure)
     {
         PlayerPrefs.SetFloat(PosXKey, position.x);
         PlayerPrefs.SetFloat(PosYKey, position.y);
+        PlayerPrefs.SetFloat(LightExposureKey, currentExposure); // Сохраняем свет
         PlayerPrefs.SetInt(HasSaveKey, 1);
         PlayerPrefs.Save();
         
-        Debug.Log($"[SaveManager] Чекпоинт сохранен: {position}");
+        Debug.Log($"[SaveManager] Чекпоинт сохранен. Свет: {currentExposure}");
     }
 
     public bool HasSavedGame()
@@ -41,23 +45,31 @@ public class SaveManager : MonoBehaviour
         return PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
     }
 
-    public Vector2 LoadCheckpoint(Vector2 defaultPosition)
+    public Vector2 LoadCheckpointPosition(Vector2 defaultPosition)
     {
         if (HasSavedGame())
         {
-            float x = PlayerPrefs.GetFloat(PosXKey);
-            float y = PlayerPrefs.GetFloat(PosYKey);
-            return new Vector2(x, y);
+            return new Vector2(PlayerPrefs.GetFloat(PosXKey), PlayerPrefs.GetFloat(PosYKey));
         }
         return defaultPosition;
+    }
+
+    // НОВЫЙ МЕТОД: Получаем сохраненный свет
+    public float LoadCheckpointExposure(float defaultExposure)
+    {
+        if (HasSavedGame())
+        {
+            return PlayerPrefs.GetFloat(LightExposureKey);
+        }
+        return defaultExposure;
     }
 
     public void ClearSave()
     {
         PlayerPrefs.DeleteKey(PosXKey);
         PlayerPrefs.DeleteKey(PosYKey);
+        PlayerPrefs.DeleteKey(LightExposureKey); // Удаляем свет
         PlayerPrefs.DeleteKey(HasSaveKey);
         PlayerPrefs.Save();
-        Debug.Log("[SaveManager] Сохранения очищены.");
     }
 }
