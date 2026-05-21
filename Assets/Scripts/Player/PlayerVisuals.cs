@@ -2,40 +2,61 @@ using UnityEngine;
 
 public class PlayerVisuals : MonoBehaviour
 {
-    public Animator animator;
-    public Rigidbody2D rb;
-    public PlayerMovement movement;
-    private Vector3 _initialScale;
+    [Header("Ссылки")]
+    [Tooltip("Перетащи сюда дочерний объект CharacterModel из Иерархии")]
+    public Transform visualsTransform; 
+    
+    private Rigidbody2D _rb;
+    private PlayerMovement _movement;
+    private Animator _animator;
+    private FixedJoint2D _joint; 
 
     void Awake()
     {
-        // Ищем всё прямо на самом игроке
-        if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (movement == null) movement = GetComponent<PlayerMovement>();
-        if (animator == null) animator = GetComponent<Animator>();
+        // 1. Ищем Физику и Движение на самом ИГРОКЕ (Родителе)
+        _rb = GetComponent<Rigidbody2D>();
+        _movement = GetComponent<PlayerMovement>();
         
-        _initialScale = transform.localScale;
+        // 2. Ищем Аниматор на КАРТИНКЕ (Дочернем объекте CharacterModel)
+        if (visualsTransform != null)
+        {
+            _animator = visualsTransform.GetComponent<Animator>();
+        }
+        else
+        {
+            Debug.LogError("PlayerVisuals: Не назначен объект Visuals Transform в Инспекторе!");
+        }
     }
 
     void Update()
     {
-        if (rb == null || animator == null) return;
+        if (_rb == null || _animator == null || visualsTransform == null) return;
+        
+        _joint = GetComponent<FixedJoint2D>();
+        float currentSpeed = Mathf.Abs(_rb.linearVelocity.x);
+        
+        // ==========================================
+        // 1. УПРАВЛЕНИЕ АНИМАТОРОМ
+        // ==========================================
+        _animator.SetFloat("Speed", currentSpeed);
 
-        // 1. Считаем скорость и отдаем Аниматору
-        float currentSpeed = Mathf.Abs(rb.linearVelocity.x);
-        animator.SetFloat("Speed", currentSpeed);
-
-        if (movement != null)
+        if (_movement != null)
         {
-            animator.SetBool("IsGrounded", movement.IsGrounded());
+            // Передаем твой параметр прыжка в Animator
+            _animator.SetBool("IsGrounded", _movement.IsGrounded());
         }
 
-        // 2. Поворачиваем персонажа туда, куда он бежит
-        bool isDragging = GetComponent<FixedJoint2D>() != null;
+        // ==========================================
+        // 2. ПОВОРОТ КАРТИНКИ
+        // ==========================================
+        bool isDragging = _joint != null;
         if (currentSpeed > 0.1f && !isDragging)
         {
-            float dir = Mathf.Sign(rb.linearVelocity.x);
-            transform.localScale = new Vector3(dir * Mathf.Abs(_initialScale.x), _initialScale.y, _initialScale.z);
+            float dir = Mathf.Sign(_rb.linearVelocity.x); 
+            
+            // ВАЖНО: Мы поворачиваем (отзеркаливаем) ТОЛЬКО дочерний объект visualsTransform!
+            // Физическая коробка родителя остается неподвижной.
+            visualsTransform.localScale = new Vector3(dir * Mathf.Abs(visualsTransform.localScale.x), visualsTransform.localScale.y, visualsTransform.localScale.z);
         }
     }
 }

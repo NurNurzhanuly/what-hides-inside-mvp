@@ -19,7 +19,7 @@ public class MainMenuManager : MonoBehaviour
 
     [Header("Настройки Камер и Света")]
     public CinemachineVirtualCamera menuCam;
-    public Volume globalVolume; // <-- НОВАЯ ССЫЛКА: ПЕРЕТАЩИ СЮДА СВОЙ GLOBAL VOLUME В ЮНИТИ!
+    public Volume globalVolume; 
 
     [Header("Настройки Игрока")]
     public PlayerMovement playerMovement;
@@ -48,8 +48,8 @@ public class MainMenuManager : MonoBehaviour
                 {
                     playerMovement.transform.position = SaveManager.Instance.LoadCheckpointPosition(playerMovement.transform.position);
                     
-                    // -- ФИКС СВЕТА ПРИ РЕСПАВНЕ --
-                    RestoreSavedLight();
+                    // Запускаем восстановление света с задержкой в 1 кадр
+                    StartCoroutine(RestoreSavedLightRoutine());
                 }
                 
                 playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -110,12 +110,11 @@ public class MainMenuManager : MonoBehaviour
             playerMovement.transform.position = SaveManager.Instance.LoadCheckpointPosition(playerMovement.transform.position);
             playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0); 
             
-            // -- ФИКС СВЕТА ПРИ ЗАГРУЗКЕ ЧЕРЕЗ LOAD GAME --
-            RestoreSavedLight();
+            // Запускаем восстановление света с задержкой в 1 кадр
+            StartCoroutine(RestoreSavedLightRoutine());
         }
         else
         {
-            // Если Новая игра - убеждаемся, что свет на норме (0)
             if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdj))
             {
                 colorAdj.postExposure.value = 0f;
@@ -139,14 +138,16 @@ public class MainMenuManager : MonoBehaviour
         if (playerMovement != null) playerMovement.enabled = true;
     }
 
-    // Функция для восстановления света
-    private void RestoreSavedLight()
+    // ТА САМАЯ ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ СВЕТА
+    private IEnumerator RestoreSavedLightRoutine()
     {
+        yield return null; // Ждем 1 кадр, чтобы URP успел прогрузиться
+        
         if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdjustments))
         {
-            float savedExposure = SaveManager.Instance.LoadCheckpointExposure(0f); // 0f - дефолтный свет
+            float savedExposure = SaveManager.Instance.LoadCheckpointExposure(0f); 
             colorAdjustments.postExposure.value = savedExposure;
-            Debug.Log($"Свет восстановлен на уровень: {savedExposure}");
+            Debug.Log($"[MainMenu] Свет восстановлен на уровень: {savedExposure}");
         }
     }
 
