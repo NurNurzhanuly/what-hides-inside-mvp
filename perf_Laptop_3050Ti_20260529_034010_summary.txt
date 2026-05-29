@@ -1,0 +1,11 @@
+=== PerfLogger summary ===
+Label:               Laptop_3050Ti
+Duration (post-warmup): 84,2 s
+Frames:              16768
+Average FPS:         199,0
+Average frame time:  5,02 ms
+Worst frame:         4493,43 ms
+Mono used:           692,3 MB
+Total reserved:      1459,5 MB
+GC collections:      12
+CSV:                 C:\Users\asus\Downloads\what-hides-inside-mvp\what-hides-inside-mvp\perf_Laptop_3050Ti_20260529_034010.csv
