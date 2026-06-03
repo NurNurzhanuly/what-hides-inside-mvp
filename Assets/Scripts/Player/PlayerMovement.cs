@@ -13,17 +13,20 @@ public class PlayerMovement : MonoBehaviour
     public float dragSpeedMultiplier = 0.8f;
 
     [Header("Limbo Physics")]
+    [Tooltip("Окно, в котором прыжок ещё засчитывается после схода с края")]
     public float coyoteTime = 0.15f;
+    [Tooltip("Окно, в котором нажатие прыжка кэшируется ПЕРЕД приземлением")]
+    public float jumpBufferTime = 0.12f;
     public float fallGravityMultiplier = 2f;
 
     [Header("Rope")]
     [Tooltip("Пауза перед повторным хватанием после прыжка с верёвки")]
     public float ropeRegrabCooldownTime = 0.3f;
-    [Tooltip("Радиус поиска соседнего сегмента при лазании. Ставь ЧУТЬ больше расстояния между двумя соседними сегментами, но меньше двойного")]
+    [Tooltip("Радиус поиска соседнего сегмента при лазании. Чуть больше расстояния между двумя сегментами, но меньше двойного")]
     public float climbReach = 0.8f;
     [Tooltip("Пауза между перехватами при лазании по верёвке")]
     public float climbCooldownTime = 0.2f;
-    [Tooltip("Насколько выше центра игрока точка хвата (примерно полроста, чтобы висеть ПОД верёвкой)")]
+    [Tooltip("Насколько выше центра игрока точка хвата (примерно полроста)")]
     public float grabAnchorY = 0.5f;
 
     public LayerMask groundLayer;
@@ -42,6 +45,7 @@ public class PlayerMovement : MonoBehaviour
     private readonly Collider2D[] _overlapResults = new Collider2D[8];
 
     private float _coyoteTimeCounter;
+    private float _jumpBufferCounter;
     private float _defaultGravity;
 
     void Awake()
@@ -59,18 +63,29 @@ public class PlayerMovement : MonoBehaviour
 
         if (_ropeRegrabCooldown > 0f) _ropeRegrabCooldown -= Time.deltaTime;
 
+        // --- Coyote time: помним, что недавно был "на опоре" ---
         if (IsGrounded() || _isOnLadder || _isOnRope)
             _coyoteTimeCounter = coyoteTime;
         else
             _coyoteTimeCounter -= Time.deltaTime;
 
-        if (_input.IsJumpPressed() && _coyoteTimeCounter > 0f)
+        // --- Jump buffer: помним, что недавно нажали прыжок ---
+        if (_input.IsJumpPressed())
+            _jumpBufferCounter = jumpBufferTime;
+        else
+            _jumpBufferCounter -= Time.deltaTime;
+
+        // --- Прыжок срабатывает, когда совпали оба окна ---
+        if (_jumpBufferCounter > 0f && _coyoteTimeCounter > 0f)
         {
             if (_isOnRope) SetOnRope(false, null);
             if (_isOnLadder) SetOnLadder(false);
 
             _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
+
+            // Гасим оба счётчика, чтобы одно нажатие не дало двойной прыжок
             _coyoteTimeCounter = 0f;
+            _jumpBufferCounter = 0f;
         }
     }
 
@@ -88,7 +103,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (_isOnRope && _activeRopeSegment != null)
         {
-            // Игрок Dynamic и висит на суставе — просто подталкиваем его, цепь раскачивается естественно
             _rb.AddForce(new Vector2(h * swingForce, 0f), ForceMode2D.Force);
 
             if (_climbCooldown > 0) _climbCooldown -= Time.fixedDeltaTime;
@@ -106,7 +120,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Переносим точку хвата на БЛИЖАЙШИЙ сегмент в нужную сторону (без телепорта)
     private void TryClimb(float direction)
     {
         if (_activeRopeSegment == null || _ropeJoint == null) return;
@@ -127,8 +140,8 @@ public class PlayerMovement : MonoBehaviour
             if (!hit.CompareTag("Rope")) continue;
 
             float dy = segRb.position.y - center.y;
-            if (direction > 0 && dy <= 0.01f) continue;   // лезем вверх — нужен сегмент выше
-            if (direction < 0 && dy >= -0.01f) continue;   // лезем вниз — нужен сегмент ниже
+            if (direction > 0 && dy <= 0.01f) continue;
+            if (direction < 0 && dy >= -0.01f) continue;
 
             float dist = Vector2.Distance(segRb.position, center);
             if (dist < bestDist)
@@ -150,12 +163,12 @@ public class PlayerMovement : MonoBehaviour
     {
         if (state)
         {
-            if (_isOnRope) return;                  // уже висим — игнорируем лишние касания триггеров
-            if (_ropeRegrabCooldown > 0f) return;   // только что отпустили — не хватаемся мгновенно
+            if (_isOnRope) return;
+            if (_ropeRegrabCooldown > 0f) return;
             if (segment == null) return;
 
             _isOnRope = true;
-            _rb.bodyType = RigidbodyType2D.Dynamic; // остаёмся Dynamic: висим и качаемся через сустав
+            _rb.bodyType = RigidbodyType2D.Dynamic;
             AttachToRope(segment);
         }
         else
@@ -177,8 +190,8 @@ public class PlayerMovement : MonoBehaviour
 
         _ropeJoint.autoConfigureConnectedAnchor = false;
         _ropeJoint.connectedBody = segment;
-        _ropeJoint.anchor = new Vector2(0f, grabAnchorY); // точка хвата на игроке (выше центра — "руки")
-        _ropeJoint.connectedAnchor = Vector2.zero;        // центр сегмента
+        _ropeJoint.anchor = new Vector2(0f, grabAnchorY);
+        _ropeJoint.connectedAnchor = Vector2.zero;
     }
 
     public void SetOnLadder(bool state)
