@@ -7,7 +7,7 @@ public class PlayerMovement : MonoBehaviour
     public float climbSpeed = 5f;
     public float jumpForce = 11f;
     public float swingForce = 45f;
-    
+
     [Header("Dragging")]
     [Range(0.1f, 1f)]
     public float dragSpeedMultiplier = 0.8f;
@@ -16,18 +16,30 @@ public class PlayerMovement : MonoBehaviour
     public float coyoteTime = 0.15f;
     public float fallGravityMultiplier = 2f;
 
+    [Header("Rope")]
+    [Tooltip("Пауза перед повторным хватанием после прыжка с верёвки")]
+    public float ropeRegrabCooldownTime = 0.3f;
+    [Tooltip("Радиус поиска соседнего сегмента при лазании. Ставь ЧУТЬ больше расстояния между двумя соседними сегментами, но меньше двойного")]
+    public float climbReach = 0.8f;
+    [Tooltip("Пауза между перехватами при лазании по верёвке")]
+    public float climbCooldownTime = 0.2f;
+    [Tooltip("Насколько выше центра игрока точка хвата (примерно полроста, чтобы висеть ПОД верёвкой)")]
+    public float grabAnchorY = 0.5f;
+
     public LayerMask groundLayer;
-    
+
     private Rigidbody2D _rb;
     private BoxCollider2D _coll;
     private IInputProvider _input;
-    
+
     private bool _isDragging = false;
     private bool _isOnLadder = false;
     private bool _isOnRope = false;
     private Rigidbody2D _activeRopeSegment;
+    private HingeJoint2D _ropeJoint;
     private float _climbCooldown = 0f;
-    private readonly Collider2D[] _overlapResults = new Collider2D[5];
+    private float _ropeRegrabCooldown = 0f;
+    private readonly Collider2D[] _overlapResults = new Collider2D[8];
 
     private float _coyoteTimeCounter;
     private float _defaultGravity;
@@ -45,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (_input == null) return;
 
+        if (_ropeRegrabCooldown > 0f) _ropeRegrabCooldown -= Time.deltaTime;
+
         if (IsGrounded() || _isOnLadder || _isOnRope)
             _coyoteTimeCounter = coyoteTime;
         else
@@ -54,7 +68,7 @@ public class PlayerMovement : MonoBehaviour
         {
             if (_isOnRope) SetOnRope(false, null);
             if (_isOnLadder) SetOnLadder(false);
-            
+
             _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
             _coyoteTimeCounter = 0f;
         }
@@ -74,12 +88,12 @@ public class PlayerMovement : MonoBehaviour
 
         if (_isOnRope && _activeRopeSegment != null)
         {
-            _rb.MovePosition(Vector2.Lerp(_rb.position, _activeRopeSegment.position, 20f * Time.fixedDeltaTime));
-            _activeRopeSegment.AddForce(new Vector2(h * swingForce, 0));
+            // Игрок Dynamic и висит на суставе — просто подталкиваем его, цепь раскачивается естественно
+            _rb.AddForce(new Vector2(h * swingForce, 0f), ForceMode2D.Force);
 
             if (_climbCooldown > 0) _climbCooldown -= Time.fixedDeltaTime;
             if (Mathf.Abs(v) > 0.1f && _climbCooldown <= 0)
-                TrySwitchSegment(v);
+                TryClimb(v);
         }
         else if (_isOnLadder)
         {
@@ -92,38 +106,79 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void TrySwitchSegment(float direction)
+    // Переносим точку хвата на БЛИЖАЙШИЙ сегмент в нужную сторону (без телепорта)
+    private void TryClimb(float direction)
     {
-        float offset = direction > 0 ? 0.7f : -0.7f;
-        Vector2 checkPoint = (Vector2)_activeRopeSegment.position + Vector2.up * offset;
-        int hitCount = Physics2D.OverlapCircleNonAlloc(checkPoint, 0.6f, _overlapResults);
-        
+        if (_activeRopeSegment == null || _ropeJoint == null) return;
+
+        Vector2 center = _activeRopeSegment.position;
+        int hitCount = Physics2D.OverlapCircleNonAlloc(center, climbReach, _overlapResults);
+
+        Rigidbody2D best = null;
+        float bestDist = float.MaxValue;
+
         for (int i = 0; i < hitCount; i++)
         {
             Collider2D hit = _overlapResults[i];
-            if (hit.gameObject != _activeRopeSegment.gameObject && hit.CompareTag("Rope"))
+            if (hit == null) continue;
+
+            Rigidbody2D segRb = hit.attachedRigidbody;
+            if (segRb == null || segRb == _activeRopeSegment) continue;
+            if (!hit.CompareTag("Rope")) continue;
+
+            float dy = segRb.position.y - center.y;
+            if (direction > 0 && dy <= 0.01f) continue;   // лезем вверх — нужен сегмент выше
+            if (direction < 0 && dy >= -0.01f) continue;   // лезем вниз — нужен сегмент ниже
+
+            float dist = Vector2.Distance(segRb.position, center);
+            if (dist < bestDist)
             {
-                _activeRopeSegment = hit.GetComponent<Rigidbody2D>();
-                _climbCooldown = 0.15f; 
-                return;
+                bestDist = dist;
+                best = segRb;
             }
+        }
+
+        if (best != null)
+        {
+            _activeRopeSegment = best;
+            _ropeJoint.connectedBody = best;
+            _climbCooldown = climbCooldownTime;
         }
     }
 
     public void SetOnRope(bool state, Rigidbody2D segment)
     {
-        _isOnRope = state;
-        _activeRopeSegment = segment;
-        
         if (state)
         {
-            _rb.bodyType = RigidbodyType2D.Kinematic;
-            _rb.linearVelocity = Vector2.zero;
+            if (_isOnRope) return;                  // уже висим — игнорируем лишние касания триггеров
+            if (_ropeRegrabCooldown > 0f) return;   // только что отпустили — не хватаемся мгновенно
+            if (segment == null) return;
+
+            _isOnRope = true;
+            _rb.bodyType = RigidbodyType2D.Dynamic; // остаёмся Dynamic: висим и качаемся через сустав
+            AttachToRope(segment);
         }
         else
         {
-            _rb.bodyType = RigidbodyType2D.Dynamic;
+            _isOnRope = false;
+            _ropeRegrabCooldown = ropeRegrabCooldownTime;
+            if (_ropeJoint != null) Destroy(_ropeJoint);
+            _ropeJoint = null;
+            _activeRopeSegment = null;
         }
+    }
+
+    private void AttachToRope(Rigidbody2D segment)
+    {
+        _activeRopeSegment = segment;
+
+        if (_ropeJoint == null)
+            _ropeJoint = gameObject.AddComponent<HingeJoint2D>();
+
+        _ropeJoint.autoConfigureConnectedAnchor = false;
+        _ropeJoint.connectedBody = segment;
+        _ropeJoint.anchor = new Vector2(0f, grabAnchorY); // точка хвата на игроке (выше центра — "руки")
+        _ropeJoint.connectedAnchor = Vector2.zero;        // центр сегмента
     }
 
     public void SetOnLadder(bool state)
