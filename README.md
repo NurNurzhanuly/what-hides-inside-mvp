@@ -1,36 +1,46 @@
-# What Hides Inside? 🌒
-
-**An Atmospheric 2D Puzzle-Platformer for Gentle Exposure to Fear of Darkness.**
+# What Hides Inside 🌒
+**An atmospheric 2D puzzle-platformer built in Unity, developed as a Software Engineering diploma project.**
 
 ---
 
-
 ### 👁️ About the Project
-"What Hides Inside?" is a graduation project developed as a part of a Software Engineering program. It explores the psychological themes of **social anxiety** and **fear of darkness** through an inverted gameplay mechanic. 
 
-In traditional media, light represents safety. Here, the logic is flipped:
-- **Light = Danger:** Representing social scrutiny and "burning" toxic environments.
-- **Darkness = Sanctuary:** A place of inner peace, safety, and recovery.
+"What Hides Inside" is a graduation project for the Software Engineering program at
+Astana IT University. While the deliverable is a playable game, the core of the project
+is a software-engineering case study: applying enterprise-grade **SOLID design principles**
+and an **interface-driven architecture** to small-team game development, in order to reduce
+coupling, cut technical debt, and eliminate version-control conflicts.
+
+The game places a silhouette character in an atmospheric, physics-driven world where
+progress depends on precise platforming and manipulating the environment to get past hazards.
 
 ### 🎮 Gameplay Features
-- **Inverted Core Mechanic:** You play as a Shadow Boy who physically dissolves under intense light. 
-- **Light Manipulation:** Use movable objects and environment to cast shadows and create safe paths.
-- **Environmental Storytelling:** No explicit dialogue. The story is told through mood, sound, and visual metaphors.
-- **Psychological Depth:** Designed with "Gentle Exposure" principles to help players rethink their relationship with fear.
+
+- **Physics manipulation:** Move crates and objects to solve environmental puzzles and open paths.
+- **Interactive mechanics:** Ladders, ropes, rotating-saw hazards, and elevators.
+- **Instant-death + checkpoints:** No health bar — any lethal contact returns you to the last checkpoint.
+- **Precision platforming:** Tight, predictable movement with coyote time and jump buffering.
+- **Environmental storytelling:** No text or dialogue. Mood and meaning come from space and sound.
+- **Spatial-audio navigation:** A sensory-deprivation level navigated largely by sound.
 
 ### 🛠️ Technical Stack & Architecture
-- **Engine:** Unity 6 (LTS).
-- **Rendering:** Universal Render Pipeline (URP) with 2D Lights & Shadows.
-- **Architecture:** 
-  - **Decoupled Design:** Uses Interface-based input handling (`IInputProvider`) and damage systems (`IDamageable`).
-  - **Event-Driven VFX:** Health and visual feedback are connected via Unity Events to ensure high modularity.
-  - **Data-Driven:** ScriptableObjects for game balancing and level configuration.
 
+- **Engine:** Unity 6 LTS
+- **Rendering:** Universal Render Pipeline (URP) with 2D lighting
+- **Architecture:**
+  - **Interface-driven, decoupled design** — `IDamageable`, `IInteractable`, `IInputProvider`,
+    and the `TriggerableObject` abstract class as the only cross-system boundaries.
+  - **Custom physics controller** — velocity-based movement, coyote time, jump buffering,
+    asymmetric fall gravity; continuous collision detection to prevent tunnelling.
+  - **Additive Scene Workflow + Git LFS** — environment and systems split across scenes to
+    eliminate merge conflicts in two-person collaborative development.
+  - **Data-driven decisions** — engineering priorities set by a pilot survey of 50 respondents.
 
-  ## 👥 Authors
+### 👥 Authors
+
 - **Aldibayeva Akku** (@Akku-2325)
 - **Nurmukhammed Seitkhan** (@NurNurzhanuly)
 
-**Scientific Supervisor:** Akhmetzhanova Shynar  
-**University:** Astana IT University (AITU)  
-**Year:** 2025-2026
+**Scientific Supervisor:** Akhmetzhanova Shynar
+**University:** Astana IT University (AITU)
+**Year:** 2025–2026
