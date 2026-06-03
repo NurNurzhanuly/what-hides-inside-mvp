@@ -5,5 +5,6 @@ public interface IInputProvider
     float GetHorizontalInput();
     float GetVerticalInput();
     bool IsJumpPressed();
-    bool IsInteractPressed();
+    bool IsInteractPressed();   // зажато — для перетаскивания ящиков
+    bool IsInteractDown();      // нажато в этом кадре — для рычагов/рубильников
 }

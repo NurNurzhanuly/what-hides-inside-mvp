@@ -18,7 +18,7 @@ public class SwitchBox : MonoBehaviour
 
     void Update()
     {
-        if (_canInteract && _playerInput != null && _playerInput.IsInteractPressed())
+        if (_canInteract && _playerInput != null && _playerInput.IsInteractDown())
         {
             Toggle();
         }
@@ -28,7 +28,7 @@ public class SwitchBox : MonoBehaviour
     {
         _isActivated = !_isActivated;
         if (_sr != null) _sr.color = _isActivated ? activeColor : _idleColor;
-        
+
         if (targetDevice != null)
         {
             if (_isActivated) targetDevice.Activate();

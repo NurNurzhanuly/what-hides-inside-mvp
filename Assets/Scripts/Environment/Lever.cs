@@ -5,7 +5,7 @@ public class Lever : MonoBehaviour
     public TriggerableObject targetDevice;
     public Sprite offSprite;
     public Sprite onSprite;
-    
+
     private bool _isOn = false;
     private SpriteRenderer _sr;
     private bool _playerInRange = false;
@@ -19,7 +19,7 @@ public class Lever : MonoBehaviour
 
     void Update()
     {
-        if (_playerInRange && _input != null && _input.IsInteractPressed())
+        if (_playerInRange && _input != null && _input.IsInteractDown())
         {
             Toggle();
         }
@@ -29,7 +29,7 @@ public class Lever : MonoBehaviour
     {
         _isOn = !_isOn;
         if (_sr != null) _sr.sprite = _isOn ? onSprite : offSprite;
-        
+
         if (targetDevice != null)
         {
             if (_isOn) targetDevice.Activate();
