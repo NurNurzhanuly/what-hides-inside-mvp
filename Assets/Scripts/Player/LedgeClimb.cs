@@ -211,4 +211,4 @@ public class LedgeClimb : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawLine(c + Vector2.up * upperCheckHeight, c + Vector2.up * upperCheckHeight + dir * wallCheckDist);
     }
-}
+} 
