@@ -1,106 +1,118 @@
-using UnityEngine;
 using System.Collections;
-using UnityEngine.Rendering.Universal;
+using UnityEngine;
+using UnityEngine.Rendering.Universal; // Light2D
 
 public class Turret : MonoBehaviour
 {
-    [Header("Настройки выстрела")]
+    [Header("Refs")]
     public GameObject bulletPrefab;
     public Transform firePoint;
-    public float burstRate = 3f;            
-    public int bulletsPerBurst = 10;        
-    
-    [Tooltip("Время между пулями. Скорострельность звука будет зависеть от этого параметра!")]
-    public float timeBetweenBullets = 0.15f; 
-    public float spreadAngle = 3f;          
+    public Light2D muzzleFlashLight;
+    public AudioSource audioSource;
 
-    [Header("Эффекты (Синхронные)")]
-    public Light2D muzzleFlashLight; 
-    public AudioSource shootAudio;   
-    
-    [Tooltip("ВАЖНО: Сюда нужно положить КОРОТКИЙ звук ОДНОГО выстрела, а не длинную очередь!")]
-    public AudioClip singleShotClip; 
+    [Header("Detection")]
+    public float detectionDistance = 15f;
+    public LayerMask targetLayer;
 
-    [Header("Сенсор (Лазер)")]
-    public float detectionDistance = 15f; 
-    public LayerMask targetLayer; 
+    [Header("Charge / telegraph (предупреждение перед очередью)")]
+    public AudioClip chargeClip;
+    [Tooltip("Сколько турель заряжается перед очередью — это фора игроку. 0.5–1.0 норм")]
+    public float chargeTime = 0.7f;
+    [Tooltip("До какой интенсивности разгорается свет дула во время зарядки")]
+    public float chargeLightIntensity = 1.5f;
 
-    private bool _isPlayerDetected = false;
-    private bool _isShooting = false;
+    [Header("Burst")]
+    public AudioClip singleShotClip;
+    public int bulletsPerBurst = 10;
+    public float timeBetweenBullets = 0.15f;
+    public float spreadAngle = 3f;
+    [Tooltip("Пауза между очередями после полной очереди")]
+    public float burstRate = 3f;
 
-    void Start()
+    [Header("Muzzle flash на каждый выстрел")]
+    public float flashIntensity = 2f;
+    public float flashDuration = 0.05f;
+
+    private bool _isBusy = false;   // заряжается или стреляет
+    private float _cooldown = 0f;
+
+    void Awake()
     {
         if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
     }
 
     void Update()
     {
+        if (_cooldown > 0f) _cooldown -= Time.deltaTime;
+        if (_isBusy || _cooldown > 0f) return;
+
+        if (TargetInBeam())
+            StartCoroutine(ChargeAndFire());
+    }
+
+    private bool TargetInBeam()
+    {
         RaycastHit2D hit = Physics2D.Raycast(firePoint.position, firePoint.right, detectionDistance, targetLayer);
-
-        if (hit.collider != null)
-        {
-            if (!_isShooting)
-            {
-                _isShooting = true;
-                StartCoroutine(BurstRoutine()); 
-            }
-        }
-        else
-        {
-            _isShooting = false; 
-        }
+        return hit.collider != null;
     }
 
-    private IEnumerator BurstRoutine()
+    private IEnumerator ChargeAndFire()
     {
-        while (_isShooting) 
+        _isBusy = true;
+
+        // --- Фаза зарядки: звук + разгорается свет (telegraph) ---
+        if (chargeClip != null && audioSource != null)
+            audioSource.PlayOneShot(chargeClip);
+
+        float t = 0f;
+        while (t < chargeTime)
         {
-            for (int i = 0; i < bulletsPerBurst; i++)
-            {
-                if (!_isShooting) break; 
-
-                if (bulletPrefab != null && firePoint != null)
-                {
-                    // 1. Создаем пулю
-                    float randomAngle = Random.Range(-spreadAngle, spreadAngle);
-                    Quaternion rotation = firePoint.rotation * Quaternion.Euler(0, 0, randomAngle);
-                    Instantiate(bulletPrefab, firePoint.position, rotation);
-                    
-                    // 2. ИДЕАЛЬНАЯ СИНХРОНИЗАЦИЯ: В этот же кадр включаем звук и вспышку
-                    StartCoroutine(MuzzleFlashAndSound());
-                }
-                
-                // 3. Ждем время до следующей пули (пауза между выстрелами)
-                yield return new WaitForSeconds(timeBetweenBullets);
-            }
-
-            yield return new WaitForSeconds(burstRate);
+            t += Time.deltaTime;
+            if (muzzleFlashLight != null)
+                muzzleFlashLight.intensity = Mathf.Lerp(0f, chargeLightIntensity, t / chargeTime);
+            yield return null;
         }
+
+        // --- Игрок успел уйти из луча? Отменяем очередь ---
+        if (!TargetInBeam())
+        {
+            if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
+            _cooldown = burstRate * 0.5f; // короткая пауза после отменённой зарядки
+            _isBusy = false;
+            yield break;
+        }
+
+        // --- Фаза стрельбы: пуля + короткий звук + вспышка на каждую ---
+        for (int i = 0; i < bulletsPerBurst; i++)
+        {
+            FireOneBullet();
+            yield return new WaitForSeconds(timeBetweenBullets);
+        }
+
+        if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
+        _cooldown = burstRate;
+        _isBusy = false;
     }
 
-    private IEnumerator MuzzleFlashAndSound()
+    private void FireOneBullet()
     {
-        // ИГРАЕМ ОДИНОЧНЫЙ ЗВУК
-        if (shootAudio != null && singleShotClip != null) 
-        {
-            shootAudio.PlayOneShot(singleShotClip);
-        }
+        float angle = Random.Range(-spreadAngle, spreadAngle);
+        Quaternion rot = firePoint.rotation * Quaternion.Euler(0f, 0f, angle);
 
-        // МИГАЕМ СВЕТОМ
-        if (muzzleFlashLight != null) 
-        {
-            muzzleFlashLight.intensity = 2f; 
-            yield return new WaitForSeconds(0.05f); // Короткая вспышка на 50 мс
-            muzzleFlashLight.intensity = 0f; 
-        }
+        if (bulletPrefab != null)
+            Instantiate(bulletPrefab, firePoint.position, rot);
+
+        if (singleShotClip != null && audioSource != null)
+            audioSource.PlayOneShot(singleShotClip);
+
+        if (muzzleFlashLight != null)
+            StartCoroutine(MuzzleFlash());
     }
 
-    private void OnDrawGizmos()
+    private IEnumerator MuzzleFlash()
     {
-        if (firePoint != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(firePoint.position, firePoint.position + firePoint.right * detectionDistance);
-        }
+        muzzleFlashLight.intensity = flashIntensity;
+        yield return new WaitForSeconds(flashDuration);
+        if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
     }
 }

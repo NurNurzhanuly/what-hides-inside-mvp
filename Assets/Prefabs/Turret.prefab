@@ -60,7 +60,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -11.66, y: -1.45, z: 0}
-  m_LocalScale: {x: 1, y: 2.03, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5649014336440960354}
@@ -115,7 +115,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 7179903646695911103, guid: aa844ec57f60b8e4d9dc268f2fcc5d02, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -139,17 +139,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Turret
   bulletPrefab: {fileID: 8416000466770683501, guid: 712cdfdac39eed64295b56ba5d30bd3e, type: 3}
   firePoint: {fileID: 5649014336440960354}
-  burstRate: 3
-  bulletsPerBurst: 10
-  timeBetweenBullets: 0.15
-  spreadAngle: 1.5
   muzzleFlashLight: {fileID: 0}
-  shootAudio: {fileID: 5557164371117467416}
-  singleShotClip: {fileID: 8300000, guid: 8a45dd4e013c3dd45ad0811523b4ea62, type: 3}
+  audioSource: {fileID: 0}
   detectionDistance: 15
   targetLayer:
     serializedVersion: 2
     m_Bits: 1
+  chargeClip: {fileID: 0}
+  chargeTime: 0.7
+  chargeLightIntensity: 1.5
+  singleShotClip: {fileID: 8300000, guid: 8a45dd4e013c3dd45ad0811523b4ea62, type: 3}
+  bulletsPerBurst: 10
+  timeBetweenBullets: 0.15
+  spreadAngle: 1.5
+  burstRate: 3
+  flashIntensity: 2
+  flashDuration: 0.05
 --- !u!82 &5557164371117467416
 AudioSource:
   m_ObjectHideFlags: 0
@@ -171,7 +176,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
+  MinDistance: 1.0133057
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0
