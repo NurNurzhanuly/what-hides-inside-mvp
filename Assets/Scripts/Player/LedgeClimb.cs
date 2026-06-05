@@ -18,6 +18,13 @@ public class LedgeClimb : MonoBehaviour
     public float ledgeRegrabTime = 0.3f;
     public float catchMaxRiseSpeed = 1.0f;
 
+    [Header("Прыжок с уступа")]
+    public float jumpOffX = 4f;
+    public float jumpOffY = 11f;
+
+    [Header("Отладка")]
+    public bool debugLog = false;
+
     private enum State { None, Hanging, Climbing }
     private State _state = State.None;
 
@@ -30,7 +37,6 @@ public class LedgeClimb : MonoBehaviour
     private Vector3 _hangOffset;
     private Vector3 _topOffset;
     private int _climbDir = 1;
-    private bool _enteredFromAbove = false;   // как вошли в вис
     private float _grace = 0f;
     private float _regrabCd = 0f;
     private float _climbT = 0f;
@@ -65,13 +71,13 @@ public class LedgeClimb : MonoBehaviour
         if (_pm.IsGrounded())
         {
             if (v < -0.5f && DetectFromAbove(out float wx, out float ty, out Transform g))
-                EnterHang(wx, ty, -_pm.Facing, g, true);   // вошли СВЕРХУ
+                EnterHang(wx, ty, -_pm.Facing, g);
         }
         else
         {
             if (_rb.linearVelocity.y <= catchMaxRiseSpeed &&
                 DetectFromBelow(out float wx, out float ty, out Transform g))
-                EnterHang(wx, ty, _pm.Facing, g, false);   // вошли СНИЗУ
+                EnterHang(wx, ty, _pm.Facing, g);
         }
     }
 
@@ -113,54 +119,56 @@ public class LedgeClimb : MonoBehaviour
         return true;
     }
 
-    private void EnterHang(float wallX, float topY, int climbDir, Transform grabbed, bool fromAbove)
+    private void EnterHang(float wallX, float topY, int climbDir, Transform grabbed)
     {
         _state = State.Hanging;
         _climbDir = climbDir;
-        _enteredFromAbove = fromAbove;
         _grace = ledgeGraceTime;
         _pm.ExternalControl = true;
         _rb.bodyType = RigidbodyType2D.Kinematic;
         _rb.linearVelocity = Vector2.zero;
-
-        Vector2 hangCenter = new Vector2(wallX - climbDir * (_coll.bounds.extents.x * 0.4f), topY - hangBelowTop);
-        transform.position += (Vector3)(hangCenter - (Vector2)_coll.bounds.center);
-
-        Vector2 climbCenter = new Vector2(wallX + climbDir * (_coll.bounds.extents.x + 0.05f), topY + _coll.bounds.extents.y + 0.02f);
-        Vector3 climbPos = transform.position + (Vector3)(climbCenter - (Vector2)_coll.bounds.center);
-
         _grabbed = grabbed;
-        _hangOffset = transform.position - grabbed.position;
-        _topOffset = climbPos - grabbed.position;
+
+        float ex = _coll.bounds.extents.x;
+        float ey = _coll.bounds.extents.y;
+        Vector2 offsetCenterToPivot = (Vector2)_coll.bounds.center - (Vector2)transform.position; // коллайдер vs пивот
+
+        // АБСОЛЮТНЫЕ мировые позиции ЦЕНТРА коллайдера:
+        Vector2 hangColliderCenter = new Vector2(wallX - climbDir * (ex * 0.4f), topY - hangBelowTop);
+        Vector2 topColliderCenter  = new Vector2(wallX + climbDir * (ex + 0.05f), topY + ey + 0.02f);
+
+        // переводим в позиции transform (пивота) и сохраняем как смещение от grabbed
+        Vector3 hangPivot = (Vector3)(hangColliderCenter - offsetCenterToPivot);
+        Vector3 topPivot  = (Vector3)(topColliderCenter  - offsetCenterToPivot);
+
+        transform.position = hangPivot;
+        _hangOffset = hangPivot - grabbed.position;
+        _topOffset  = topPivot  - grabbed.position;
+
+        if (debugLog)
+            Debug.Log($"[Ledge] topY={topY:F2}, hangY={hangPivot.y:F2}, climbTargetY={topPivot.y:F2}");
     }
 
     private void Hang()
     {
-        if (_grabbed == null) { Release(); return; }
+        if (_grabbed == null) { Release(false); return; }
         _rb.MovePosition((Vector2)_grabbed.position + (Vector2)_hangOffset);
 
         if (_grace > 0f) { _grace -= Time.fixedDeltaTime; return; }
+
+        if (_input.IsJumpPressed()) { Release(true); return; }
 
         float v = _input.GetVerticalInput();
 
         if (v > 0.5f)
         {
-            // ВВЕРХ — забраться наверх
+            if (debugLog) Debug.Log("[Ledge] ВВЕРХ → подъём");
             _state = State.Climbing; _climbT = 0f;
         }
         else if (v < -0.5f)
         {
-            // ВНИЗ — зависит от того, как вошли:
-            if (_enteredFromAbove)
-            {
-                // свесился сверху и передумал → вернуться наверх (та же анимация подъёма)
-                _state = State.Climbing; _climbT = 0f;
-            }
-            else
-            {
-                // зацепился снизу → отпуститься и упасть
-                Release();
-            }
+            if (debugLog) Debug.Log("[Ledge] ВНИЗ → падаю");
+            Release(false);
         }
     }
 
@@ -179,13 +187,18 @@ public class LedgeClimb : MonoBehaviour
         }
     }
 
-    private void Release()
+    private void Release(bool jumpOff)
     {
         _state = State.None;
         _rb.bodyType = RigidbodyType2D.Dynamic;
         _pm.ExternalControl = false;
         _regrabCd = ledgeRegrabTime;
-        _rb.linearVelocity = new Vector2(-_climbDir * 1.5f, 0f);
+
+        if (jumpOff)
+            _rb.linearVelocity = new Vector2(-_climbDir * jumpOffX, jumpOffY);
+        else
+            _rb.linearVelocity = Vector2.zero;
+
         _grabbed = null;
     }
 
@@ -211,4 +224,4 @@ public class LedgeClimb : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawLine(c + Vector2.up * upperCheckHeight, c + Vector2.up * upperCheckHeight + dir * wallCheckDist);
     }
-} 
+}
