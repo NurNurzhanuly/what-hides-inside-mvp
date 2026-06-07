@@ -5,18 +5,14 @@ using UnityEngine.Rendering.Universal;
 public class Turret : MonoBehaviour
 {
     [Header("Ловушка (Limbo)")]
-    [Tooltip("Укажи здесь Turret_Rig. Если пусто - турель работает в обычном режиме!")]
     public TurretTrapController trapController;
-    public float continuousFireRate = 0.1f;
+    public float continuousFireRate = 0.04f; 
 
     [Header("Refs")]
     public GameObject bulletPrefab;
     public Transform firePoint;
     public Light2D muzzleFlashLight;
     public AudioSource audioSource;
-
-    [Header("VFX")]
-    public ParticleSystem muzzleFlashVFX;
 
     [Header("Detection")]
     public float detectionDistance = 15f;
@@ -40,20 +36,26 @@ public class Turret : MonoBehaviour
 
     private bool _isBusy = false;
     private float _cooldown = 0f;
-    
-    // Флаг для бесконечного режима ловушки
     private bool _isContinuousFireMode = false;
+
+    // === НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ФИЗИКИ ===
+    private Vector3 _lastPosition;
+    private Vector2 _currentVelocity;
 
     void Awake()
     {
         if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
+        _lastPosition = transform.position;
     }
 
     void Update()
     {
+        // 1. ВЫЧИСЛЯЕМ СКОРОСТЬ ПУЛЕМЕТА
+        _currentVelocity = (transform.position - _lastPosition) / Time.deltaTime;
+        _lastPosition = transform.position;
+
         if (_cooldown > 0f) _cooldown -= Time.deltaTime;
 
-        // === РЕЖИМ ЛОВУШКИ: БЕСКОНЕЧНЫЙ ОГОНЬ ===
         if (_isContinuousFireMode)
         {
             if (_cooldown <= 0f)
@@ -64,21 +66,12 @@ public class Turret : MonoBehaviour
             return; 
         }
 
-        // === ОБЫЧНЫЙ РЕЖИМ ИЛИ РЕЖИМ ОЖИДАНИЯ ЛОВУШКИ ===
         if (_isBusy || _cooldown > 0f) return;
 
         if (TargetInBeam())
         {
-            if (trapController != null)
-            {
-                // Если мы часть большой ловушки - докладываем боссу!
-                trapController.SpringTheTrap();
-            }
-            else
-            {
-                // Если мы обычная одиночная турель - стреляем сами
-                StartCoroutine(ChargeAndFireNormal());
-            }
+            if (trapController != null) trapController.SpringTheTrap();
+            else StartCoroutine(ChargeAndFireNormal());
         }
     }
 
@@ -88,11 +81,9 @@ public class Turret : MonoBehaviour
         return hit.collider != null;
     }
 
-    // --- МЕТОДЫ ДЛЯ КОНТРОЛЛЕРА ЛОВУШКИ ---
-
     public void TriggerSynchronizedCharge(float time)
     {
-        _isBusy = true; // Блокируем обычное поведение
+        _isBusy = true; 
         if (chargeClip != null && audioSource != null) audioSource.PlayOneShot(chargeClip);
         StartCoroutine(LightChargeRoutine(time));
     }
@@ -109,12 +100,7 @@ public class Turret : MonoBehaviour
         }
     }
 
-    public void StartContinuousFire()
-    {
-        _isContinuousFireMode = true;
-    }
-
-    // --- ОБЫЧНЫЙ РЕЖИМ ТУРЕЛИ (Твой старый код) ---
+    public void StartContinuousFire() => _isContinuousFireMode = true;
 
     private IEnumerator ChargeAndFireNormal()
     {
@@ -144,23 +130,29 @@ public class Turret : MonoBehaviour
 
     private void FireOneBullet()
     {
-        float angle = Random.Range(-spreadAngle, spreadAngle);
+        float currentSpread = _isContinuousFireMode ? 0f : spreadAngle;
+        float angle = Random.Range(-currentSpread, currentSpread);
         Quaternion rot = firePoint.rotation * Quaternion.Euler(0f, 0f, angle);
 
         if (bulletPrefab != null)
-            Instantiate(bulletPrefab, firePoint.position, rot);
-
-        if (singleShotClip != null && audioSource != null)
-            audioSource.PlayOneShot(singleShotClip);
-
-        if (muzzleFlashVFX != null)
         {
-            muzzleFlashVFX.Stop();
-            muzzleFlashVFX.Play();
+            GameObject b = Instantiate(bulletPrefab, firePoint.position, rot);
+            
+            // Передаем пуле скорость самой ловушки, чтобы пули летели вместе с ней вбок!
+            if (_isContinuousFireMode)
+            {
+                Rigidbody2D rb = b.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    rb.linearVelocity += _currentVelocity;
+                }
+            }
         }
 
-        if (muzzleFlashLight != null)
-            StartCoroutine(MuzzleFlash());
+        if (!_isContinuousFireMode && singleShotClip != null && audioSource != null)
+            audioSource.PlayOneShot(singleShotClip);
+
+        if (muzzleFlashLight != null) StartCoroutine(MuzzleFlash());
     }
 
     private IEnumerator MuzzleFlash()
