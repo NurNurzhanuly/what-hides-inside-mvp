@@ -4,6 +4,11 @@ using UnityEngine.Rendering.Universal;
 
 public class Turret : MonoBehaviour
 {
+    [Header("Ловушка (Limbo)")]
+    [Tooltip("Укажи здесь Turret_Rig. Если пусто - турель работает в обычном режиме!")]
+    public TurretTrapController trapController;
+    public float continuousFireRate = 0.1f;
+
     [Header("Refs")]
     public GameObject bulletPrefab;
     public Transform firePoint;
@@ -35,6 +40,9 @@ public class Turret : MonoBehaviour
 
     private bool _isBusy = false;
     private float _cooldown = 0f;
+    
+    // Флаг для бесконечного режима ловушки
+    private bool _isContinuousFireMode = false;
 
     void Awake()
     {
@@ -44,10 +52,34 @@ public class Turret : MonoBehaviour
     void Update()
     {
         if (_cooldown > 0f) _cooldown -= Time.deltaTime;
+
+        // === РЕЖИМ ЛОВУШКИ: БЕСКОНЕЧНЫЙ ОГОНЬ ===
+        if (_isContinuousFireMode)
+        {
+            if (_cooldown <= 0f)
+            {
+                FireOneBullet();
+                _cooldown = continuousFireRate;
+            }
+            return; 
+        }
+
+        // === ОБЫЧНЫЙ РЕЖИМ ИЛИ РЕЖИМ ОЖИДАНИЯ ЛОВУШКИ ===
         if (_isBusy || _cooldown > 0f) return;
 
         if (TargetInBeam())
-            StartCoroutine(ChargeAndFire());
+        {
+            if (trapController != null)
+            {
+                // Если мы часть большой ловушки - докладываем боссу!
+                trapController.SpringTheTrap();
+            }
+            else
+            {
+                // Если мы обычная одиночная турель - стреляем сами
+                StartCoroutine(ChargeAndFireNormal());
+            }
+        }
     }
 
     private bool TargetInBeam()
@@ -56,26 +88,45 @@ public class Turret : MonoBehaviour
         return hit.collider != null;
     }
 
-    private IEnumerator ChargeAndFire()
+    // --- МЕТОДЫ ДЛЯ КОНТРОЛЛЕРА ЛОВУШКИ ---
+
+    public void TriggerSynchronizedCharge(float time)
     {
-        _isBusy = true;
+        _isBusy = true; // Блокируем обычное поведение
+        if (chargeClip != null && audioSource != null) audioSource.PlayOneShot(chargeClip);
+        StartCoroutine(LightChargeRoutine(time));
+    }
 
-        if (chargeClip != null && audioSource != null)
-            audioSource.PlayOneShot(chargeClip);
-
+    private IEnumerator LightChargeRoutine(float time)
+    {
         float t = 0f;
-        while (t < chargeTime)
+        while (t < time)
         {
             t += Time.deltaTime;
             if (muzzleFlashLight != null)
-                muzzleFlashLight.intensity = Mathf.Lerp(0f, chargeLightIntensity, t / chargeTime);
+                muzzleFlashLight.intensity = Mathf.Lerp(0f, chargeLightIntensity, t / time);
             yield return null;
         }
+    }
+
+    public void StartContinuousFire()
+    {
+        _isContinuousFireMode = true;
+    }
+
+    // --- ОБЫЧНЫЙ РЕЖИМ ТУРЕЛИ (Твой старый код) ---
+
+    private IEnumerator ChargeAndFireNormal()
+    {
+        _isBusy = true;
+        if (chargeClip != null && audioSource != null) audioSource.PlayOneShot(chargeClip);
+
+        yield return StartCoroutine(LightChargeRoutine(chargeTime));
 
         if (!TargetInBeam())
         {
             if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
-            _cooldown = burstRate * 0.5f;
+            _cooldown = burstRate * 0.5f; 
             _isBusy = false;
             yield break;
         }

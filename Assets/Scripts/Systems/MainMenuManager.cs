@@ -12,14 +12,14 @@ public class MainMenuManager : MonoBehaviour
 
     [Space(10)]
     [Header("Элементы UI")]
-    public CanvasGroup menuCanvasGroup;       
-    public GameObject menuFrameImage;         
-    public GameObject settingsPanel;          
-    public float fadeDuration = 2f;           
+    public CanvasGroup menuCanvasGroup;
+    public GameObject menuFrameImage;
+    public GameObject settingsPanel;
+    public float fadeDuration = 2f;
 
     [Header("Настройки Камер и Света")]
     public CinemachineVirtualCamera menuCam;
-    public Volume globalVolume; 
+    public Volume globalVolume;
 
     [Header("Настройки Игрока")]
     public PlayerMovement playerMovement;
@@ -39,7 +39,7 @@ public class MainMenuManager : MonoBehaviour
             if (menuCanvasGroup != null) menuCanvasGroup.gameObject.SetActive(false);
             if (menuFrameImage != null) menuFrameImage.SetActive(false);
             if (settingsPanel != null) settingsPanel.SetActive(false);
-            
+
             if (menuCam != null) menuCam.Priority = 0;
 
             if (playerMovement != null)
@@ -47,20 +47,18 @@ public class MainMenuManager : MonoBehaviour
                 if (isRespawningNow && SaveManager.Instance.HasSavedGame())
                 {
                     playerMovement.transform.position = SaveManager.Instance.LoadCheckpointPosition(playerMovement.transform.position);
-                    
-                    // Запускаем восстановление света с задержкой в 1 кадр
                     StartCoroutine(RestoreSavedLightRoutine());
                 }
-                
+
                 playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0);
-                playerMovement.enabled = true; 
+                playerMovement.enabled = true;
             }
 
             if (isRespawningNow)
             {
                 StartCoroutine(FadeInFromBlack());
             }
-            return; 
+            return;
         }
 
         // НОРМАЛЬНЫЙ СТАРТ
@@ -72,7 +70,7 @@ public class MainMenuManager : MonoBehaviour
         {
             playerMovement.enabled = false;
             _playerRb = playerMovement.GetComponent<Rigidbody2D>();
-            
+
             if (_playerRb != null)
             {
                 _playerRb.freezeRotation = true;
@@ -108,17 +106,13 @@ public class MainMenuManager : MonoBehaviour
         if (isLoadingSave && playerMovement != null)
         {
             playerMovement.transform.position = SaveManager.Instance.LoadCheckpointPosition(playerMovement.transform.position);
-            playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0); 
-            
-            // Запускаем восстановление света с задержкой в 1 кадр
+            playerMovement.transform.rotation = Quaternion.Euler(0, 0, 0);
             StartCoroutine(RestoreSavedLightRoutine());
         }
         else
         {
-            if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdj))
-            {
-                colorAdj.postExposure.value = 0f;
-            }
+            if (CaveLightController.Instance != null)
+                CaveLightController.Instance.ApplyStateInstant(false); // новая игра — на свету
             yield return StartCoroutine(StandUpPlayer());
         }
 
@@ -138,16 +132,14 @@ public class MainMenuManager : MonoBehaviour
         if (playerMovement != null) playerMovement.enabled = true;
     }
 
-    // ТА САМАЯ ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ СВЕТА
     private IEnumerator RestoreSavedLightRoutine()
     {
-        yield return null; // Ждем 1 кадр, чтобы URP успел прогрузиться
-        
-        if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments colorAdjustments))
+        yield return null; // ждём кадр, чтобы URP прогрузился
+        if (CaveLightController.Instance != null)
         {
-            float savedExposure = SaveManager.Instance.LoadCheckpointExposure(0f); 
-            colorAdjustments.postExposure.value = savedExposure;
-            Debug.Log($"[MainMenu] Свет восстановлен на уровень: {savedExposure}");
+            bool inDark = SaveManager.Instance.LoadCheckpointInDark();
+            CaveLightController.Instance.ApplyStateInstant(inDark);
+            Debug.Log($"[MainMenu] Свет восстановлен. В темноте: {inDark}");
         }
     }
 
@@ -181,15 +173,15 @@ public class MainMenuManager : MonoBehaviour
         GameObject imageObj = new GameObject("BlackScreen");
         imageObj.transform.SetParent(canvasObj.transform, false);
         Image fadeImage = imageObj.AddComponent<Image>();
-        fadeImage.color = new Color(0, 0, 0, 1f); 
-        
+        fadeImage.color = new Color(0, 0, 0, 1f);
+
         RectTransform rt = fadeImage.rectTransform;
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
         rt.sizeDelta = Vector2.zero;
 
         float timer = 0f;
-        float duration = 1.5f; 
+        float duration = 1.5f;
 
         while (timer < duration)
         {
@@ -203,13 +195,13 @@ public class MainMenuManager : MonoBehaviour
 
     public void OnSettingsClicked()
     {
-        if (menuFrameImage != null) menuFrameImage.SetActive(false); 
+        if (menuFrameImage != null) menuFrameImage.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
     public void ShowMenuButtons()
     {
-        if (menuFrameImage != null) menuFrameImage.SetActive(true); 
+        if (menuFrameImage != null) menuFrameImage.SetActive(true);
     }
 
     public void OnExitClicked()
