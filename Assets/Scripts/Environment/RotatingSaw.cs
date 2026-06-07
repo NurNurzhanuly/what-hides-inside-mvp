@@ -2,27 +2,24 @@ using UnityEngine;
 
 public class RotatingSaw : MonoBehaviour
 {
-    // В режиме Manual ты сама двигаешь искры руками в Scene, скрипт их не трогает
     public enum SparkPlacement { Bottom, Top, Left, Right, Manual }
 
-    [Header("Вращение картинки")]
+    [Header("Вращение")]
     public Transform sawVisuals;
     public float rotationSpeed = 500f;
 
-    [Header("Настройка Эффектов (VFX)")]
+    [Header("Настройка Эффектов")]
     public ParticleSystem sparksEffect;
     public ParticleSystem dustEffect;
     public SparkPlacement placement = SparkPlacement.Bottom;
-    [Tooltip("Дистанция от центра (только для авто-режимов)")]
     public float offsetDistance = 1.2f;
     
-    [Header("Направление искр")]
-    [Tooltip("Угол вылета. Работает ВСЕГДА, даже если пила стоит")]
+    [Header("Направление (Rotation Offset)")]
+    [Range(-360, 360)]
     public float rotationOffset = 0f; 
-    [Tooltip("Разворачивать искры против движения при патруле?")]
     public bool flipByDirection = true;
 
-    [Header("Движение (Патруль)")]
+    [Header("Движение")]
     public bool isPatrolling = false;
     public Vector3 targetOffset;
     public float moveSpeed = 2f;
@@ -43,18 +40,15 @@ public class RotatingSaw : MonoBehaviour
 
     void Update()
     {
-        // 1. Крутим картинку
         if (sawVisuals != null)
             sawVisuals.Rotate(0, 0, rotationSpeed * Time.deltaTime, Space.Self);
 
-        // 2. Двигаем пилу
         if (isPatrolling) HandleMovement();
         
-        // 3. Управляем эффектами
         UpdateEffects();
     }
 
-    // Это чтобы всё менялось в реальном времени, когда ты крутишь ползунки в инспекторе
+    // Это заставляет искры крутиться прямо в редакторе, когда ты двигаешь ползунок
     private void OnValidate()
     {
         UpdateEffects();
@@ -64,8 +58,7 @@ public class RotatingSaw : MonoBehaviour
     {
         if (sparksEffect == null) return;
 
-        // --- 1. ПОЗИЦИЯ (Transform) ---
-        // Если Manual - мы ВООБЩЕ не трогаем позицию, двигай объект Sparks руками в окне Scene
+        // 1. Позиция
         if (placement != SparkPlacement.Manual)
         {
             Vector3 localPos = Vector3.zero;
@@ -80,21 +73,24 @@ public class RotatingSaw : MonoBehaviour
             if (dustEffect != null) dustEffect.transform.localPosition = localPos;
         }
 
-        // --- 2. НАПРАВЛЕНИЕ (Rotation) ---
-        float finalAngle = rotationOffset;
+        // 2. Направление (ВОТ ТУТ ПРАВКА)
+        float currentAngle = rotationOffset;
 
-        // Если пила едет - считаем угол от движения, если стоит - берем просто rotationOffset
+        // Если едем - добавляем разворот. Если стоим - просто юзаем оффсет.
         if (isPatrolling && flipByDirection && Application.isPlaying)
         {
             Vector3 moveDir = (transform.position - _lastPosition).normalized;
-            if (moveDir.magnitude > 0.001f)
+            if (moveDir.magnitude > 0.01f)
             {
-                finalAngle = Mathf.Atan2(-moveDir.y, -moveDir.x) * Mathf.Rad2Deg + rotationOffset;
+                // Считаем угол "от движения" + оффсет
+                currentAngle = Mathf.Atan2(-moveDir.y, -moveDir.x) * Mathf.Rad2Deg + rotationOffset;
+                // Чтобы угол был локальным относительно наклона пилы:
+                currentAngle -= transform.eulerAngles.z; 
             }
             _lastPosition = transform.position;
         }
 
-        Quaternion targetRot = Quaternion.Euler(0, 0, finalAngle);
+        Quaternion targetRot = Quaternion.Euler(0, 0, currentAngle);
         sparksEffect.transform.localRotation = targetRot;
         if (dustEffect != null) dustEffect.transform.localRotation = targetRot;
     }
@@ -113,11 +109,5 @@ public class RotatingSaw : MonoBehaviour
             _movingToEnd = !_movingToEnd;
             _currentWaitTime = waitTimeAtEnds;
         }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        IDamageable damageable = collision.GetComponent<IDamageable>() ?? collision.GetComponentInParent<IDamageable>();
-        if (damageable != null) damageable.TakeDamage(100f);
     }
 }
