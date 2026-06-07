@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5742187544782348932}
   - component: {fileID: 2418570814953629446}
+  - component: {fileID: 9098188453678065564}
   - component: {fileID: 6648480077192479977}
   - component: {fileID: 1407776553253810225}
-  - component: {fileID: 9098188453678065564}
   m_Layer: 0
   m_Name: Bullet
   m_TagString: Untagged
@@ -94,6 +94,20 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &9098188453678065564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8416000466770683501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb301b50f54cd814191b0e6e850c61c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Bullet
+  speed: 15
+  lifeTime: 3
 --- !u!50 &6648480077192479977
 Rigidbody2D:
   serializedVersion: 5
@@ -167,17 +181,3 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
---- !u!114 &9098188453678065564
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8416000466770683501}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb301b50f54cd814191b0e6e850c61c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Bullet
-  speed: 10
-  lifeTime: 3
