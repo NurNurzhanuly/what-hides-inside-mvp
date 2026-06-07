@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Rendering.Universal; // Light2D
+using UnityEngine.Rendering.Universal;
 
 public class Turret : MonoBehaviour
 {
@@ -10,15 +10,16 @@ public class Turret : MonoBehaviour
     public Light2D muzzleFlashLight;
     public AudioSource audioSource;
 
+    [Header("VFX")]
+    public ParticleSystem muzzleFlashVFX;
+
     [Header("Detection")]
     public float detectionDistance = 15f;
     public LayerMask targetLayer;
 
-    [Header("Charge / telegraph (предупреждение перед очередью)")]
+    [Header("Charge / telegraph")]
     public AudioClip chargeClip;
-    [Tooltip("Сколько турель заряжается перед очередью — это фора игроку. 0.5–1.0 норм")]
     public float chargeTime = 0.7f;
-    [Tooltip("До какой интенсивности разгорается свет дула во время зарядки")]
     public float chargeLightIntensity = 1.5f;
 
     [Header("Burst")]
@@ -26,14 +27,13 @@ public class Turret : MonoBehaviour
     public int bulletsPerBurst = 10;
     public float timeBetweenBullets = 0.15f;
     public float spreadAngle = 3f;
-    [Tooltip("Пауза между очередями после полной очереди")]
     public float burstRate = 3f;
 
-    [Header("Muzzle flash на каждый выстрел")]
+    [Header("Muzzle flash")]
     public float flashIntensity = 2f;
     public float flashDuration = 0.05f;
 
-    private bool _isBusy = false;   // заряжается или стреляет
+    private bool _isBusy = false;
     private float _cooldown = 0f;
 
     void Awake()
@@ -60,7 +60,6 @@ public class Turret : MonoBehaviour
     {
         _isBusy = true;
 
-        // --- Фаза зарядки: звук + разгорается свет (telegraph) ---
         if (chargeClip != null && audioSource != null)
             audioSource.PlayOneShot(chargeClip);
 
@@ -73,16 +72,14 @@ public class Turret : MonoBehaviour
             yield return null;
         }
 
-        // --- Игрок успел уйти из луча? Отменяем очередь ---
         if (!TargetInBeam())
         {
             if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
-            _cooldown = burstRate * 0.5f; // короткая пауза после отменённой зарядки
+            _cooldown = burstRate * 0.5f;
             _isBusy = false;
             yield break;
         }
 
-        // --- Фаза стрельбы: пуля + короткий звук + вспышка на каждую ---
         for (int i = 0; i < bulletsPerBurst; i++)
         {
             FireOneBullet();
@@ -104,6 +101,12 @@ public class Turret : MonoBehaviour
 
         if (singleShotClip != null && audioSource != null)
             audioSource.PlayOneShot(singleShotClip);
+
+        if (muzzleFlashVFX != null)
+        {
+            muzzleFlashVFX.Stop();
+            muzzleFlashVFX.Play();
+        }
 
         if (muzzleFlashLight != null)
             StartCoroutine(MuzzleFlash());
