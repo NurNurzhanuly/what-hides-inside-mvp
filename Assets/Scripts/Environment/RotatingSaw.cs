@@ -2,72 +2,100 @@ using UnityEngine;
 
 public class RotatingSaw : MonoBehaviour
 {
+    public enum SparkPlacement { Bottom, Top, Left, Right, Manual }
+
     [Header("Вращение")]
-    [Tooltip("Ссылка на дочерний объект с картинкой (Visuals)")]
-    public Transform sawVisuals; 
-    public float rotationSpeed = 400f;
+    public Transform sawVisuals;
+    public float rotationSpeed = 500f;
 
     [Header("Движение (Патруль)")]
     public bool isPatrolling = false;
-    [Tooltip("На сколько сдвинется пила от точки спавна (X, Y)")]
     public Vector3 targetOffset;
     public float moveSpeed = 2f;
-    [Tooltip("Пауза на краях маршрута")]
     public float waitTimeAtEnds = 0.2f;
+
+    [Header("Настройка Искр (VFX)")]
+    public ParticleSystem sparksEffect;
+    public SparkPlacement placement = SparkPlacement.Bottom;
+    [Tooltip("Расстояние от центра до зубьев")]
+    public float offsetDistance = 1.0f;
+    [Tooltip("Разворачивать искры против движения?")]
+    public bool flipByDirection = true;
 
     private Vector3 _startPos;
     private Vector3 _targetPos;
     private bool _movingToEnd = true;
     private float _currentWaitTime = 0f;
+    private Vector3 _lastPosition;
 
     void Awake()
     {
-        // Запоминаем точки маршрута
         _startPos = transform.position;
         _targetPos = _startPos + targetOffset;
+        _lastPosition = transform.position;
     }
 
     void Update()
     {
-        // 1. ВРАЩЕНИЕ (Крутим только картинку!)
+        // 1. Вращение визуала
         if (sawVisuals != null)
-        {
-            // Используем Space.Self, чтобы она крутилась вокруг своей центральной оси
             sawVisuals.Rotate(0, 0, rotationSpeed * Time.deltaTime, Space.Self);
-        }
-        else
+
+        // 2. Движение
+        if (isPatrolling) HandleMovement();
+
+        // 3. Позиционирование искр
+        if (sparksEffect != null) UpdateSparks();
+    }
+
+    // Эта функция обновляет положение искр в реальном времени в редакторе
+    void OnValidate()
+    {
+        if (sparksEffect != null) UpdateSparks();
+    }
+
+    private void UpdateSparks()
+    {
+        if (placement == SparkPlacement.Manual) return;
+
+        // Ставим искры на границу пилы
+        Vector3 newPos = Vector3.zero;
+        switch (placement)
         {
-            Debug.LogWarning($"Пила {gameObject.name} не имеет ссылки на Visuals!");
+            case SparkPlacement.Bottom: newPos = Vector3.down * offsetDistance; break;
+            case SparkPlacement.Top:    newPos = Vector3.up * offsetDistance; break;
+            case SparkPlacement.Left:   newPos = Vector3.left * offsetDistance; break;
+            case SparkPlacement.Right:  newPos = Vector3.right * offsetDistance; break;
         }
+        sparksEffect.transform.localPosition = newPos;
 
-        // 2. ДВИЖЕНИЕ (Двигаем весь родительский объект туда-сюда)
-        if (isPatrolling)
+        // Если пила едет, разворачиваем хвост искр в обратную сторону
+        if (flipByDirection && isPatrolling && Application.isPlaying)
         {
-            if (_currentWaitTime > 0)
-            {
-                _currentWaitTime -= Time.deltaTime;
-                return; // Ждем на краю
-            }
+            Vector3 moveDir = (transform.position - _lastPosition).normalized;
+            _lastPosition = transform.position;
 
-            Vector3 target = _movingToEnd ? _targetPos : _startPos;
-            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
-
-            if (Vector3.Distance(transform.position, target) < 0.01f)
+            if (moveDir.magnitude > 0.001f)
             {
-                _movingToEnd = !_movingToEnd; // Разворачиваемся
-                _currentWaitTime = waitTimeAtEnds; // Начинаем ждать
+                float angle = Mathf.Atan2(-moveDir.y, -moveDir.x) * Mathf.Rad2Deg;
+                sparksEffect.transform.rotation = Quaternion.Euler(0, 0, angle);
             }
         }
     }
 
-    // Убийство игрока
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void HandleMovement()
     {
-        // Ищем скрипт IDamageable у того, кто в нас врезался
-        IDamageable damageable = collision.GetComponent<IDamageable>() ?? collision.GetComponentInParent<IDamageable>();
-        if (damageable != null)
+        if (_currentWaitTime > 0)
         {
-            damageable.TakeDamage(100f);
+            _currentWaitTime -= Time.deltaTime;
+            return;
+        }
+        Vector3 target = _movingToEnd ? _targetPos : _startPos;
+        transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+        if (Vector3.Distance(transform.position, target) < 0.01f)
+        {
+            _movingToEnd = !_movingToEnd;
+            _currentWaitTime = waitTimeAtEnds;
         }
     }
 }

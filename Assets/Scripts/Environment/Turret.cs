@@ -138,7 +138,6 @@ public class Turret : MonoBehaviour
         {
             GameObject b = Instantiate(bulletPrefab, firePoint.position, rot);
             
-            // === МАГИЯ ЗДЕСЬ ===
             // Передаем пуле скорость самой ловушки, чтобы пули летели вместе с ней вбок!
             if (_isContinuousFireMode)
             {
