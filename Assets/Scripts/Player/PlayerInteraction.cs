@@ -37,7 +37,7 @@ public class PlayerInteraction : MonoBehaviour
 
         if (hit.collider != null)
         {
-            _currentObject = hit.collider.gameObject; // ОШИБКА БЫЛА ЗДЕСЬ. Теперь мы запоминаем объект
+            _currentObject = hit.collider.gameObject; 
             Rigidbody2D targetRb = _currentObject.GetComponent<Rigidbody2D>();
 
             if (targetRb != null)

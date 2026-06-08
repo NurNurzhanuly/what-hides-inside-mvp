@@ -22,11 +22,9 @@ public class LedgeClimb : MonoBehaviour
     public float jumpOffX = 4f;
     public float jumpOffY = 11f;
 
-    [Header("Отладка")]
-    public bool debugLog = false;
-
     private enum State { None, Hanging, Climbing }
     private State _state = State.None;
+    public bool IsHanging { get { return _state == State.Hanging || _state == State.Climbing; } }
 
     private PlayerMovement _pm;
     private Rigidbody2D _rb;
@@ -75,8 +73,7 @@ public class LedgeClimb : MonoBehaviour
         }
         else
         {
-            if (_rb.linearVelocity.y <= catchMaxRiseSpeed &&
-                DetectFromBelow(out float wx, out float ty, out Transform g))
+            if (_rb.linearVelocity.y <= catchMaxRiseSpeed && DetectFromBelow(out float wx, out float ty, out Transform g))
                 EnterHang(wx, ty, _pm.Facing, g);
         }
     }
@@ -105,7 +102,6 @@ public class LedgeClimb : MonoBehaviour
     {
         wallX = 0f; topY = 0f; grabbed = null;
         Vector2 dir = Vector2.right * _pm.Facing;
-
         Vector2 footUnder = new Vector2(_coll.bounds.center.x, _coll.bounds.min.y + 0.05f);
         Vector2 footFwd = new Vector2(_coll.bounds.center.x + dir.x * (_coll.bounds.extents.x + 0.2f), _coll.bounds.min.y + 0.05f);
 
@@ -129,47 +125,28 @@ public class LedgeClimb : MonoBehaviour
         _rb.linearVelocity = Vector2.zero;
         _grabbed = grabbed;
 
-        float ex = _coll.bounds.extents.x;
-        float ey = _coll.bounds.extents.y;
-        Vector2 offsetCenterToPivot = (Vector2)_coll.bounds.center - (Vector2)transform.position; // коллайдер vs пивот
+        Vector2 offsetCenterToPivot = (Vector2)_coll.bounds.center - (Vector2)transform.position;
+        Vector2 hangColliderCenter = new Vector2(wallX - climbDir * (_coll.bounds.extents.x * 0.4f), topY - hangBelowTop);
+        Vector2 topColliderCenter  = new Vector2(wallX + climbDir * (_coll.bounds.extents.x + 0.05f), topY + _coll.bounds.extents.y + 0.02f);
 
-        // АБСОЛЮТНЫЕ мировые позиции ЦЕНТРА коллайдера:
-        Vector2 hangColliderCenter = new Vector2(wallX - climbDir * (ex * 0.4f), topY - hangBelowTop);
-        Vector2 topColliderCenter  = new Vector2(wallX + climbDir * (ex + 0.05f), topY + ey + 0.02f);
-
-        // переводим в позиции transform (пивота) и сохраняем как смещение от grabbed
         Vector3 hangPivot = (Vector3)(hangColliderCenter - offsetCenterToPivot);
         Vector3 topPivot  = (Vector3)(topColliderCenter  - offsetCenterToPivot);
 
         transform.position = hangPivot;
         _hangOffset = hangPivot - grabbed.position;
         _topOffset  = topPivot  - grabbed.position;
-
-        if (debugLog)
-            Debug.Log($"[Ledge] topY={topY:F2}, hangY={hangPivot.y:F2}, climbTargetY={topPivot.y:F2}");
     }
 
     private void Hang()
     {
         if (_grabbed == null) { Release(false); return; }
         _rb.MovePosition((Vector2)_grabbed.position + (Vector2)_hangOffset);
-
         if (_grace > 0f) { _grace -= Time.fixedDeltaTime; return; }
-
         if (_input.IsJumpPressed()) { Release(true); return; }
 
         float v = _input.GetVerticalInput();
-
-        if (v > 0.5f)
-        {
-            if (debugLog) Debug.Log("[Ledge] ВВЕРХ → подъём");
-            _state = State.Climbing; _climbT = 0f;
-        }
-        else if (v < -0.5f)
-        {
-            if (debugLog) Debug.Log("[Ledge] ВНИЗ → падаю");
-            Release(false);
-        }
+        if (v > 0.5f) { _state = State.Climbing; _climbT = 0f; }
+        else if (v < -0.5f) { Release(false); }
     }
 
     private void Climb()
@@ -179,12 +156,7 @@ public class LedgeClimb : MonoBehaviour
         float u = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_climbT / climbDuration));
         Vector2 off = Vector2.Lerp(_hangOffset, _topOffset, u);
         _rb.MovePosition((Vector2)_grabbed.position + off);
-
-        if (_climbT >= climbDuration)
-        {
-            transform.position = (Vector3)((Vector2)_grabbed.position + (Vector2)_topOffset);
-            Finish();
-        }
+        if (_climbT >= climbDuration) { transform.position = _grabbed.position + _topOffset; Finish(); }
     }
 
     private void Release(bool jumpOff)
@@ -193,12 +165,7 @@ public class LedgeClimb : MonoBehaviour
         _rb.bodyType = RigidbodyType2D.Dynamic;
         _pm.ExternalControl = false;
         _regrabCd = ledgeRegrabTime;
-
-        if (jumpOff)
-            _rb.linearVelocity = new Vector2(-_climbDir * jumpOffX, jumpOffY);
-        else
-            _rb.linearVelocity = Vector2.zero;
-
+        if (jumpOff) _rb.linearVelocity = new Vector2(-_climbDir * jumpOffX, jumpOffY);
         _grabbed = null;
     }
 
@@ -206,22 +173,8 @@ public class LedgeClimb : MonoBehaviour
     {
         _state = State.None;
         _rb.bodyType = RigidbodyType2D.Dynamic;
-        _rb.linearVelocity = Vector2.zero;
         _pm.ExternalControl = false;
         _regrabCd = ledgeRegrabTime;
         _grabbed = null;
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        var coll = GetComponent<BoxCollider2D>();
-        if (coll == null) return;
-        Vector2 c = coll.bounds.center;
-        int f = (_pm != null && Application.isPlaying) ? _pm.Facing : 1;
-        Vector2 dir = Vector2.right * f;
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(c + Vector2.up * lowerCheckHeight, c + Vector2.up * lowerCheckHeight + dir * wallCheckDist);
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(c + Vector2.up * upperCheckHeight, c + Vector2.up * upperCheckHeight + dir * wallCheckDist);
     }
 }
