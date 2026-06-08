@@ -112,7 +112,7 @@ public class MainMenuManager : MonoBehaviour
         else
         {
             if (CaveLightController.Instance != null)
-                CaveLightController.Instance.ApplyStateInstant(false); // новая игра — на свету
+                CaveLightController.Instance.ApplyStateInstant(false);
             yield return StartCoroutine(StandUpPlayer());
         }
 
@@ -134,12 +134,25 @@ public class MainMenuManager : MonoBehaviour
 
     private IEnumerator RestoreSavedLightRoutine()
     {
-        yield return null; // ждём кадр, чтобы URP прогрузился
+        yield return null; // ждём кадр, чтобы URP/контроллер прогрузились
+
+        // ждём, пока контроллер появится (на случай порядка инициализации)
+        float timeout = 0f;
+        while (CaveLightController.Instance == null && timeout < 1f)
+        {
+            timeout += Time.deltaTime;
+            yield return null;
+        }
+
         if (CaveLightController.Instance != null)
         {
             bool inDark = SaveManager.Instance.LoadCheckpointInDark();
+            Debug.Log($"[Respawn] загружаю inDark={inDark}, контроллер есть=True");
             CaveLightController.Instance.ApplyStateInstant(inDark);
-            Debug.Log($"[MainMenu] Свет восстановлен. В темноте: {inDark}");
+        }
+        else
+        {
+            Debug.LogError("[Respawn] CaveLightController.Instance так и не появился!");
         }
     }
 

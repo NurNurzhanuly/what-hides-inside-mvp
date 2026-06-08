@@ -38,6 +38,14 @@ public class SaveManager : MonoBehaviour
 
     public bool LoadCheckpointInDark() => HasSavedGame() && PlayerPrefs.GetInt(InDarkKey, 0) == 1;
 
+    // Это тот чекпоинт, на котором мы только что заспавнились? (тогда не пересохраняем)
+    public bool IsSavedCheckpoint(Vector2 position)
+    {
+        if (!HasSavedGame()) return false;
+        Vector2 saved = new Vector2(PlayerPrefs.GetFloat(PosXKey), PlayerPrefs.GetFloat(PosYKey));
+        return Vector2.Distance(saved, position) < 0.1f;
+    }
+
     public void ClearSave()
     {
         PlayerPrefs.DeleteKey(PosXKey);
