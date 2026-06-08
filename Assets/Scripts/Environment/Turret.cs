@@ -6,13 +6,21 @@ public class Turret : MonoBehaviour
 {
     [Header("Ловушка (Limbo)")]
     public TurretTrapController trapController;
-    public float continuousFireRate = 0.04f; 
+    public float continuousFireRate = 0.04f;
 
     [Header("Refs")]
     public GameObject bulletPrefab;
     public Transform firePoint;
     public Light2D muzzleFlashLight;
     public AudioSource audioSource;
+
+    [Header("Партиклы дула")]
+    [Tooltip("ParticleSystem вспышки, ребёнок firePoint. Play On Awake выключить!")]
+    public ParticleSystem muzzleParticles;
+    [Tooltip("Сколько частиц на один выстрел")]
+    public int muzzleParticleCount = 4;
+    [Tooltip("Множитель яркости частиц, когда игрок в темноте (пещера)")]
+    [Range(0.1f, 1f)] public float darkParticleAlpha = 0.5f;
 
     [Header("Detection")]
     public float detectionDistance = 15f;
@@ -38,7 +46,6 @@ public class Turret : MonoBehaviour
     private float _cooldown = 0f;
     private bool _isContinuousFireMode = false;
 
-    // === НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ФИЗИКИ ===
     private Vector3 _lastPosition;
     private Vector2 _currentVelocity;
 
@@ -50,7 +57,6 @@ public class Turret : MonoBehaviour
 
     void Update()
     {
-        // 1. ВЫЧИСЛЯЕМ СКОРОСТЬ ПУЛЕМЕТА
         _currentVelocity = (transform.position - _lastPosition) / Time.deltaTime;
         _lastPosition = transform.position;
 
@@ -63,7 +69,7 @@ public class Turret : MonoBehaviour
                 FireOneBullet();
                 _cooldown = continuousFireRate;
             }
-            return; 
+            return;
         }
 
         if (_isBusy || _cooldown > 0f) return;
@@ -83,7 +89,7 @@ public class Turret : MonoBehaviour
 
     public void TriggerSynchronizedCharge(float time)
     {
-        _isBusy = true; 
+        _isBusy = true;
         if (chargeClip != null && audioSource != null) audioSource.PlayOneShot(chargeClip);
         StartCoroutine(LightChargeRoutine(time));
     }
@@ -112,7 +118,7 @@ public class Turret : MonoBehaviour
         if (!TargetInBeam())
         {
             if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
-            _cooldown = burstRate * 0.5f; 
+            _cooldown = burstRate * 0.5f;
             _isBusy = false;
             yield break;
         }
@@ -137,22 +143,35 @@ public class Turret : MonoBehaviour
         if (bulletPrefab != null)
         {
             GameObject b = Instantiate(bulletPrefab, firePoint.position, rot);
-            
-            // Передаем пуле скорость самой ловушки, чтобы пули летели вместе с ней вбок!
+
             if (_isContinuousFireMode)
             {
                 Rigidbody2D rb = b.GetComponent<Rigidbody2D>();
-                if (rb != null)
-                {
-                    rb.linearVelocity += _currentVelocity;
-                }
+                if (rb != null) rb.linearVelocity += _currentVelocity;
             }
         }
+
+        EmitMuzzle();
 
         if (!_isContinuousFireMode && singleShotClip != null && audioSource != null)
             audioSource.PlayOneShot(singleShotClip);
 
         if (muzzleFlashLight != null) StartCoroutine(MuzzleFlash());
+    }
+
+    // Пых вспышки с учётом темноты: в пещере чуть приглушаем альфу, чтобы не било по глазам
+    private void EmitMuzzle()
+    {
+        if (muzzleParticles == null) return;
+
+        bool inDark = CaveLightController.Instance != null && CaveLightController.Instance.IsInDark;
+
+        var main = muzzleParticles.main;
+        Color c = main.startColor.color;
+        c.a = inDark ? darkParticleAlpha : 1f;
+        main.startColor = c;
+
+        muzzleParticles.Emit(muzzleParticleCount);
     }
 
     private IEnumerator MuzzleFlash()
