@@ -4,9 +4,7 @@ using System.Collections;
 public class TurretTrapController : MonoBehaviour
 {
     [Header("Ловушка")]
-    [Tooltip("Пулеметы, которые прикреплены к этой ловушке")]
     public Turret[] childTurrets;
-    [Tooltip("Сколько секунд пулеметы заряжаются перед началом мясорубки")]
     public float synchronizedChargeTime = 0.5f;
 
     [Header("Движение (Waypoint Mover)")]
@@ -17,10 +15,10 @@ public class TurretTrapController : MonoBehaviour
     private bool _isTrapSprung = false;
     private bool _isMoving = false;
     private int _currentIndex = 0;
+    private bool _pathCompleted = false; // Флаг завершения пути
 
     void Start()
     {
-        // При старте ставим риг на первую точку
         if (waypoints != null && waypoints.Length > 0)
         {
             transform.position = waypoints[0].position;
@@ -31,9 +29,14 @@ public class TurretTrapController : MonoBehaviour
 
     void Update()
     {
-        // Движение по точкам работает только после срабатывания ловушки
         if (!_isMoving || waypoints == null || waypoints.Length == 0) return;
-        if (_currentIndex >= waypoints.Length) return;
+
+        // ПРОВЕРКА: Доехали ли до конца?
+        if (_currentIndex >= waypoints.Length)
+        {
+            if (!_pathCompleted) FinishTrap(); // Выполняем один раз при доезде
+            return;
+        }
 
         Transform targetWP = waypoints[_currentIndex];
 
@@ -49,34 +52,41 @@ public class TurretTrapController : MonoBehaviour
         }
     }
 
-    // Эту функцию вызовет пулемет, когда его луч заденет игрока
+    private void FinishTrap()
+    {
+        _pathCompleted = true;
+        _isMoving = false;
+
+        // Даем команду всем пулеметам прекратить огонь
+        foreach (var t in childTurrets)
+        {
+            t.StopContinuousFire();
+        }
+
+        Debug.Log("[TurretTrap] Конечная точка достигнута. Огонь прекращен.");
+    }
+
     public void SpringTheTrap()
     {
-        if (_isTrapSprung) return; // Ловушка срабатывает только один раз
+        if (_isTrapSprung) return;
         _isTrapSprung = true;
-
-        Debug.Log("[TurretTrap] Ловушка захлопнулась! Начинаем синхронную зарядку.");
         StartCoroutine(TrapSequence());
     }
 
     private IEnumerator TrapSequence()
     {
-        // 1. Даем команду всем пулеметам начать зарядку (визуально пугаем игрока)
         foreach (var t in childTurrets)
         {
             t.TriggerSynchronizedCharge(synchronizedChargeTime);
         }
 
-        // Ждем пока они зарядятся
         yield return new WaitForSeconds(synchronizedChargeTime);
 
-        // 2. Даем команду всем пулеметам стрелять БЕСКОНЕЧНО
         foreach (var t in childTurrets)
         {
             t.StartContinuousFire();
         }
 
-        // 3. Поехали!
         _isMoving = true;
     }
 }
