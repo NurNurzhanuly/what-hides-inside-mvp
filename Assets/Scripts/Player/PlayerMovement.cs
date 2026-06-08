@@ -28,10 +28,14 @@ public class PlayerMovement : MonoBehaviour
 
     public LayerMask groundLayer;
 
-    // --- Хуки для внешних состояний (LedgeClimb и т.п.) ---
+    // --- Свойства для других скриптов ---
     public bool ExternalControl { get; set; } = false;
-    public int Facing => _facing;
-    public bool CanLedgeGrab => !ExternalControl && !_isOnLadder && !_isOnRope;
+    public int Facing { get { return _facing; } }
+    public bool CanLedgeGrab { get { return !ExternalControl && !_isOnLadder && !_isOnRope; } }
+    
+    public bool IsOnRope() { return _isOnRope; }
+    public bool IsOnLadder() { return _isOnLadder; }
+    public bool IsDragging() { return _isDragging; }
 
     private Rigidbody2D _rb;
     private BoxCollider2D _coll;
@@ -182,8 +186,13 @@ public class PlayerMovement : MonoBehaviour
         if (state) _rb.linearVelocity = Vector2.zero;
     }
 
-    public void SetDragging(bool state) => _isDragging = state;
+    public void SetDragging(bool state)
+    {
+        _isDragging = state;
+    }
 
-    public bool IsGrounded() =>
-        Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
+    public bool IsGrounded()
+    {
+        return Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
+    }
 }
