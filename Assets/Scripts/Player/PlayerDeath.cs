@@ -6,14 +6,33 @@ using Cinemachine;
 
 public class PlayerDeath : MonoBehaviour, IDamageable
 {
+    [Header("Настройки смерти")]
     public float delayBeforeFade = 1.0f;
     public float fadeDuration = 1.5f;
+
+    [Header("Звук")]
+    [Tooltip("Звук, который прозвучит в момент получения урона")]
+    public AudioClip deathSound;
+    private AudioSource _audio;
+
     private bool _isDead = false;
+
+    private void Awake()
+    {
+        // Пытаемся получить AudioSource. Если его нет на игроке, добавь его в инспекторе.
+        _audio = GetComponent<AudioSource>();
+    }
 
     public void TakeDamage(float amount)
     {
         if (_isDead) return;
         _isDead = true;
+
+        // Воспроизводим звук сразу при смерти
+        if (_audio != null && deathSound != null)
+        {
+            _audio.PlayOneShot(deathSound);
+        }
         
         StartCoroutine(DeathRoutine());
     }
@@ -39,7 +58,7 @@ public class PlayerDeath : MonoBehaviour, IDamageable
         // 2. Ждем перед затемнением
         yield return new WaitForSeconds(delayBeforeFade);
 
-        // 3. Рисуем черный экран
+        // 3. Рисуем черный экран (твоя оригинальная логика)
         GameObject canvasObj = new GameObject("FadeCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;

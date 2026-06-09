@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class RotatingSaw : MonoBehaviour
 {
     public enum SparkPlacement { Bottom, Top, Left, Right, Manual }
@@ -7,6 +8,10 @@ public class RotatingSaw : MonoBehaviour
     [Header("Вращение визуальной части")]
     public Transform sawVisuals;
     public float rotationSpeed = 500f;
+
+    [Header("Audio (3D Loop)")]
+    public AudioClip sawIdleClip;
+    private AudioSource _audio;
 
     [Header("Эффекты (VFX)")]
     public ParticleSystem sparksEffect;
@@ -37,6 +42,17 @@ public class RotatingSaw : MonoBehaviour
         _startPos = transform.position;
         _targetPos = _startPos + targetOffset;
         _lastPosition = transform.position;
+
+        // ИНИЦИАЛИЗАЦИЯ ЗВУКА
+        _audio = GetComponent<AudioSource>();
+        if (_audio != null && sawIdleClip != null)
+        {
+            _audio.clip = sawIdleClip;
+            _audio.loop = true;
+            _audio.playOnAwake = true;
+            _audio.spatialBlend = 1f; // 3D звук
+            _audio.Play();
+        }
     }
 
     void Update()

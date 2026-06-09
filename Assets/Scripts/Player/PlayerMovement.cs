@@ -26,22 +26,28 @@ public class PlayerMovement : MonoBehaviour
     public float climbCooldownTime = 0.2f;
     public float grabAnchorY = 0.5f;
 
+    [Header("Audio (НОВОЕ)")]
+    [Tooltip("Перетащи сюда AudioSource игрока")]
+    public AudioSource playerAudioSource;
+    [Tooltip("Массив звуков шагов (можно один или несколько для разнообразия)")]
+    public AudioClip[] footstepSounds;
+    [Tooltip("Частота шагов (0.3 - 0.4 обычно ок)")]
+    public float footstepInterval = 0.35f;
+    private float _stepTimer;
+
     public LayerMask groundLayer;
 
-    // --- Свойства для других скриптов ---
+    // --- Хуки для внешних состояний ---
     public bool ExternalControl { get; set; } = false;
-    public int Facing { get { return _facing; } }
-    public bool CanLedgeGrab { get { return !ExternalControl && !_isOnLadder && !_isOnRope; } }
-    
-    public bool IsOnRope() { return _isOnRope; }
-    public bool IsOnLadder() { return _isOnLadder; }
-    public bool IsDragging() { return _isDragging; }
+    public int Facing => _facing;
+    public bool CanLedgeGrab => !ExternalControl && !_isOnLadder && !_isOnRope;
 
     private Rigidbody2D _rb;
     private BoxCollider2D _coll;
     private IInputProvider _input;
 
     private bool _isDragging = false;
+    public bool IsDragging => _isDragging;
     private bool _isOnLadder = false;
     private bool _isOnRope = false;
     private Rigidbody2D _activeRopeSegment;
@@ -62,6 +68,9 @@ public class PlayerMovement : MonoBehaviour
         _input = GetComponent<IInputProvider>();
         _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         _defaultGravity = _rb.gravityScale;
+        
+        // Если AudioSource не назначен, пробуем найти его на этом же объекте
+        if (playerAudioSource == null) playerAudioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -88,6 +97,36 @@ public class PlayerMovement : MonoBehaviour
             _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
             _coyoteTimeCounter = 0f;
             _jumpBufferCounter = 0f;
+        }
+
+        // --- ЛОГИКА ШАГОВ (НОВОЕ) ---
+        HandleFootstepAudio();
+    }
+
+    private void HandleFootstepAudio()
+    {
+        // Играем звук только если мы на земле и реально идем
+        if (IsGrounded() && Mathf.Abs(_input.GetHorizontalInput()) > 0.1f && !_isOnLadder)
+        {
+            _stepTimer -= Time.deltaTime;
+            if (_stepTimer <= 0)
+            {
+                if (playerAudioSource != null && footstepSounds != null && footstepSounds.Length > 0)
+                {
+                    // Выбираем случайный звук из массива, чтобы не было монотонно
+                    int randomIndex = Random.Range(0, footstepSounds.Length);
+                    playerAudioSource.PlayOneShot(footstepSounds[randomIndex], 0.4f);
+                }
+
+                // Если тянем ящик — шаги в 1.5 раза медленнее
+                float currentInterval = _isDragging ? footstepInterval * 1.5f : footstepInterval;
+                _stepTimer = currentInterval;
+            }
+        }
+        else
+        {
+            // Сбрасываем таймер, чтобы первый шаг при начале движения звучал сразу
+            _stepTimer = 0f;
         }
     }
 
@@ -186,13 +225,8 @@ public class PlayerMovement : MonoBehaviour
         if (state) _rb.linearVelocity = Vector2.zero;
     }
 
-    public void SetDragging(bool state)
-    {
-        _isDragging = state;
-    }
+    public void SetDragging(bool state) => _isDragging = state;
 
-    public bool IsGrounded()
-    {
-        return Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
-    }
+    public bool IsGrounded() =>
+        Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
 }
