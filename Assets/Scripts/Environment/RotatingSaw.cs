@@ -57,15 +57,15 @@ public class RotatingSaw : MonoBehaviour
 
     void Update()
     {
-        // 1. Вращаем саму пилу
+
         if (sawVisuals != null)
             sawVisuals.Rotate(0, 0, rotationSpeed * Time.deltaTime, Space.Self);
 
-        // 2. Двигаем пилу по маршруту
+
         if (isPatrolling) 
             HandleMovement();
         
-        // 3. Управляем искрами и пылью
+
         UpdateEffects();
     }
 
@@ -78,7 +78,7 @@ public class RotatingSaw : MonoBehaviour
     {
         if (sparksEffect == null) return;
 
-        // --- 1. ПОЗИЦИЯ (Где находится корень эффекта) ---
+
         Vector3 localPos = Vector3.zero;
         if (placement != SparkPlacement.Manual)
         {
@@ -90,7 +90,7 @@ public class RotatingSaw : MonoBehaviour
                 case SparkPlacement.Right:  localPos = Vector2.right * offsetDistance; break;
             }
 
-            // ГЛАВНАЯ ЛОГИКА: Если едем обратно (к старту), инвертируем позицию
+
             if (isPatrolling && autoFlipOnReturn && Application.isPlaying && !_movingToEnd)
             {
                 localPos = -localPos;
@@ -100,7 +100,7 @@ public class RotatingSaw : MonoBehaviour
             if (dustEffect != null) dustEffect.transform.localPosition = localPos;
         }
 
-        // --- 2. НАПРАВЛЕНИЕ (Куда смотрят искры) ---
+
         float finalAngle = rotationOffset;
 
         if (isPatrolling && Application.isPlaying)
@@ -109,14 +109,14 @@ public class RotatingSaw : MonoBehaviour
             
             if (moveDir.magnitude > 0.001f)
             {
-                // Считаем угол "от движения" (назад) + твой оффсет
+
                 finalAngle = Mathf.Atan2(-moveDir.y, -moveDir.x) * Mathf.Rad2Deg + rotationOffset;
             }
             _lastPosition = transform.position;
         }
         else if (autoFlipOnReturn && Application.isPlaying && !_movingToEnd)
         {
-            // Если пила стоит на паузе в конце пути, но уже развернулась - зеркалим угол
+
             finalAngle += 180f;
         }
 

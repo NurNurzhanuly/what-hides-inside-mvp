@@ -9,7 +9,6 @@ public class MovingPlatform : TriggerableObject
     private Vector3 _targetPos;
     private bool _isActive = false;
 
-    // Список всех пассажиров на платформе
     private List<Transform> _passengers = new List<Transform>();
     private Vector3 _previousPos;
 
@@ -28,10 +27,10 @@ public class MovingPlatform : TriggerableObject
         Vector3 destination = _isActive ? _targetPos : _startPos;
         transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);
         
-        // Вычисляем вектор смещения платформы в этом кадре
+
         Vector3 delta = transform.position - _previousPos;
         
-        // Двигаем всех пассажиров вместе с платформой вручную (без SetParent!)
+
         for (int i = _passengers.Count - 1; i >= 0; i--)
         {
             if (_passengers[i] != null)

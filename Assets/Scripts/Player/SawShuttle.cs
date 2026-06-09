@@ -1,8 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-// Челночное движение пилы: медленно вперёд (рабочий ход), быстро назад (откат).
-// Вешать на ТУ ЖЕ пилу. У её RotatingSaw выключи isPatrolling, вращение/урон оставь.
 public class SawShuttle : MonoBehaviour
 {
     [Tooltip("Смещение точки B от стартовой точки A. Для горизонтали: (10,0,0)")]
@@ -32,10 +30,10 @@ public class SawShuttle : MonoBehaviour
     {
         while (true)
         {
-            yield return MoveTo(_pointB, forwardSpeed);   // медленно вперёд
+            yield return MoveTo(_pointB, forwardSpeed);   
             if (waitAtB > 0f) yield return new WaitForSeconds(waitAtB);
 
-            yield return MoveTo(_pointA, returnSpeed);     // быстро назад
+            yield return MoveTo(_pointA, returnSpeed);     
             if (waitAtA > 0f) yield return new WaitForSeconds(waitAtA);
         }
     }

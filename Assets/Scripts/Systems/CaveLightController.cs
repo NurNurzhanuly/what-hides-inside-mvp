@@ -38,14 +38,13 @@ public class CaveLightController : MonoBehaviour
             Debug.LogError("[CaveLight] globalVolume НЕ назначен!");
             return;
         }
-        // profile (геттер) возвращает рантайм-инстанс, к которому привязан рендер
         if (globalVolume.profile.TryGet(out ColorAdjustments ca))
             Debug.Log("[CaveLight] ColorAdjustments найден, всё ок.");
         else
             Debug.LogError("[CaveLight] В профиле Volume нет Color Adjustments! Добавь override и включи Post Exposure.");
     }
 
-    // Берём ColorAdjustments из актуального профиля КАЖДЫЙ раз
+
     private ColorAdjustments GetCA()
     {
         if (globalVolume != null && globalVolume.profile.TryGet(out ColorAdjustments ca))

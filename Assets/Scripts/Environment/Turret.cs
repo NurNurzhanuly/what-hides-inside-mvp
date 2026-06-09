@@ -57,13 +57,13 @@ public class Turret : MonoBehaviour
 
     void Update()
     {
-        // Вычисляем скорость движения для передачи пулям (чтобы стена была ровной)
+
         _currentVelocity = (transform.position - _lastPosition) / Time.deltaTime;
         _lastPosition = transform.position;
 
         if (_cooldown > 0f) _cooldown -= Time.deltaTime;
 
-        // === РЕЖИМ ЛОВУШКИ: БЕСКОНЕЧНЫЙ ОГОНЬ ===
+
         if (_isContinuousFireMode)
         {
             if (_cooldown <= 0f)
@@ -76,7 +76,7 @@ public class Turret : MonoBehaviour
 
         if (_isBusy || _cooldown > 0f) return;
 
-        // Обнаружение игрока
+
         if (TargetInBeam())
         {
             if (trapController != null) trapController.SpringTheTrap();
@@ -90,7 +90,7 @@ public class Turret : MonoBehaviour
         return hit.collider != null;
     }
 
-    // --- МЕТОДЫ ДЛЯ КОНТРОЛЛЕРА ЛОВУШКИ ---
+
 
     public void TriggerSynchronizedCharge(float time)
     {
@@ -101,11 +101,11 @@ public class Turret : MonoBehaviour
 
     public void StartContinuousFire() => _isContinuousFireMode = true;
 
-    // НОВОЕ: Остановка огня в конце пути
+
     public void StopContinuousFire()
     {
         _isContinuousFireMode = false;
-        _isBusy = false; // Позволяет турели снова работать в обычном режиме, если нужно
+        _isBusy = false; 
         if (muzzleFlashLight != null) muzzleFlashLight.intensity = 0f;
         
         Debug.Log($"[Turret] {gameObject.name} огонь прекращен.");
@@ -123,7 +123,7 @@ public class Turret : MonoBehaviour
         }
     }
 
-    // --- ОБЫЧНЫЙ РЕЖИМ ТУРЕЛИ ---
+
 
     private IEnumerator ChargeAndFireNormal()
     {
@@ -132,7 +132,7 @@ public class Turret : MonoBehaviour
 
         yield return StartCoroutine(LightChargeRoutine(chargeTime));
 
-        // В обычном режиме стреляем фиксированную очередь
+
         for (int i = 0; i < bulletsPerBurst; i++)
         {
             FireOneBullet();
@@ -154,7 +154,7 @@ public class Turret : MonoBehaviour
         {
             GameObject b = Instantiate(bulletPrefab, firePoint.position, rot);
 
-            // Передаем пуле скорость самой ловушки, чтобы пули летели вместе с ней вбок
+
             if (_isContinuousFireMode)
             {
                 Rigidbody2D rb = b.GetComponent<Rigidbody2D>();
@@ -164,7 +164,7 @@ public class Turret : MonoBehaviour
 
         EmitMuzzle();
 
-        // Звук выстрела только в обычном режиме (в бесконечном звук идет от Rig)
+
         if (!_isContinuousFireMode && singleShotClip != null && audioSource != null)
             audioSource.PlayOneShot(singleShotClip);
 

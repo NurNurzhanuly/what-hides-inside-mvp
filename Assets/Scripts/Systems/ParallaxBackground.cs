@@ -25,7 +25,7 @@ public class ParallaxBackground : MonoBehaviour
 
         _lastCameraPosition = cameraTransform.position;
         
-        // Создаем ИНСТАНС материала, чтобы двигать текстуру только на этом объекте
+
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
         _materialInstance = sr.material; 
     }
@@ -34,17 +34,17 @@ public class ParallaxBackground : MonoBehaviour
     {
         if (cameraTransform == null) return;
 
-        // Вычисляем, насколько сдвинулась камера
+
         Vector3 deltaMovement = cameraTransform.position - _lastCameraPosition;
 
-        // Вычисляем смещение текстуры (с учетом масштаба самого объекта)
+
         float offsetX = (deltaMovement.x * parallaxEffectX) / transform.localScale.x;
         float offsetY = (deltaMovement.y * parallaxEffectY) / transform.localScale.y;
 
-        // Сдвигаем текстуру внутри спрайта
+
         _materialInstance.mainTextureOffset += new Vector2(offsetX, offsetY);
 
-        // Двигаем сам объект фона вслед за камерой, чтобы он всегда был перед глазами
+
         transform.position = new Vector3(cameraTransform.position.x, cameraTransform.position.y, transform.position.z);
 
         _lastCameraPosition = cameraTransform.position;
