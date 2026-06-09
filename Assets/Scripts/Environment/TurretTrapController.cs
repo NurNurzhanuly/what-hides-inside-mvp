@@ -15,7 +15,7 @@ public class TurretTrapController : MonoBehaviour
     private bool _isTrapSprung = false;
     private bool _isMoving = false;
     private int _currentIndex = 0;
-    private bool _pathCompleted = false; // Флаг завершения пути
+    private bool _pathCompleted = false; 
 
     void Start()
     {
@@ -31,10 +31,10 @@ public class TurretTrapController : MonoBehaviour
     {
         if (!_isMoving || waypoints == null || waypoints.Length == 0) return;
 
-        // ПРОВЕРКА: Доехали ли до конца?
+
         if (_currentIndex >= waypoints.Length)
         {
-            if (!_pathCompleted) FinishTrap(); // Выполняем один раз при доезде
+            if (!_pathCompleted) FinishTrap(); 
             return;
         }
 
@@ -57,7 +57,6 @@ public class TurretTrapController : MonoBehaviour
         _pathCompleted = true;
         _isMoving = false;
 
-        // Даем команду всем пулеметам прекратить огонь
         foreach (var t in childTurrets)
         {
             t.StopContinuousFire();

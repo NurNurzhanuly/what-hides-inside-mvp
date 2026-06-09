@@ -13,7 +13,7 @@ public class BearTrap : MonoBehaviour
 
     private SpriteRenderer _sr;
     private AudioSource _audio;
-    private Collider2D _triggerCollider; // Будем хранить именно триггер
+    private Collider2D _triggerCollider; 
     private bool _isSprung = false;
 
     private void Awake()
@@ -21,7 +21,6 @@ public class BearTrap : MonoBehaviour
         _sr = GetComponent<SpriteRenderer>();
         _audio = GetComponent<AudioSource>();
 
-        // Ищем среди всех коллайдеров именно тот, который отвечает за урон (Is Trigger = true)
         Collider2D[] colliders = GetComponents<Collider2D>();
         foreach (var c in colliders)
         {
@@ -59,7 +58,6 @@ public class BearTrap : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Капкан реагирует на Игрока и на Интерактивные объекты (ящики и т.д.)
         if (collision.CompareTag("Player") || collision.CompareTag("Interactable"))
         {
             HandleHit(collision.gameObject);
@@ -72,7 +70,6 @@ public class BearTrap : MonoBehaviour
         if (_sr != null && closedSprite != null) _sr.sprite = closedSprite;
         if (_audio != null && snapSound != null) _audio.PlayOneShot(snapSound);
         
-        // Отключаем ТОЛЬКО триггер. Твердый коллайдер остается, чтобы капкан можно было таскать и он не падал под пол!
         if (_triggerCollider != null) _triggerCollider.enabled = false;
 
         Logger.Instance?.Log("BearTrap snapped");

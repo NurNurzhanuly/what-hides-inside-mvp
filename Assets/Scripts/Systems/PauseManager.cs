@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 public class PauseManager : MonoBehaviour
 {
     [Header("Элементы UI")]
-    public GameObject pauseCanvas;      // Холст паузы
-    public GameObject pauseButtons;     // Контейнер с кнопками (Resume, Settings, MainMenu)
+    public GameObject pauseCanvas;      
+    public GameObject pauseButtons;   
 
     private bool _isPaused = false;
     private IInputProvider _input;
@@ -23,12 +23,10 @@ public class PauseManager : MonoBehaviour
 
     void Update()
     {
-        // Нажатие Escape
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            // Если меню настроек открыто, Esc не должен снимать паузу!
-            // Он должен закрыть настройки. Этим займется скрипт SettingsMenu.
-            // Поэтому тут мы просто ставим на паузу или снимаем её, если мы в главном окне паузы.
+           
             
             if (_isPaused) ResumeGame();
             else PauseGame();
@@ -52,13 +50,13 @@ public class PauseManager : MonoBehaviour
         if (pauseCanvas != null) pauseCanvas.SetActive(false);
     }
 
-    // Прячет кнопки паузы, когда мы открываем Настройки
+
     public void OnSettingsClicked()
     {
         if (pauseButtons != null) pauseButtons.SetActive(false);
     }
 
-    // Эту функцию (возврат кнопок паузы) теперь должен вызывать скрипт SettingsMenu!
+
     public void ShowPauseButtons()
     {
         if (pauseButtons != null) pauseButtons.SetActive(true);

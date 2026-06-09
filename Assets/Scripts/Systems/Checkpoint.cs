@@ -9,11 +9,9 @@ public class Checkpoint : MonoBehaviour
     {
         if (_isActivated || !collision.CompareTag("Player")) return;
 
-        // Если мы только что заспавнились на этом же чекпоинте — не пересохраняем,
-        // иначе затрём сохранённое состояние темноты на текущее (ещё не восстановленное).
         if (SaveManager.Instance != null && SaveManager.Instance.IsSavedCheckpoint(transform.position))
         {
-            _isActivated = true; // считаем активированным, но НЕ перезаписываем сейв
+            _isActivated = true; 
             Debug.Log("[Checkpoint] это чекпоинт респавна — пропускаю пересохранение");
             return;
         }

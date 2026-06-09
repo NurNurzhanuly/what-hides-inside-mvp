@@ -20,7 +20,6 @@ public class PlayerDeath : MonoBehaviour, IDamageable
 
     private IEnumerator DeathRoutine()
     {
-        // 1. Отключаем всё у игрока
         PlayerMovement movement = GetComponent<PlayerMovement>();
         if (movement != null) movement.enabled = false;
 
@@ -36,10 +35,9 @@ public class PlayerDeath : MonoBehaviour, IDamageable
         CinemachineVirtualCamera cam = Object.FindFirstObjectByType<CinemachineVirtualCamera>();
         if (cam != null) cam.Follow = null;
 
-        // 2. Ждем перед затемнением
         yield return new WaitForSeconds(delayBeforeFade);
 
-        // 3. Рисуем черный экран
+
         GameObject canvasObj = new GameObject("FadeCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -64,7 +62,7 @@ public class PlayerDeath : MonoBehaviour, IDamageable
             yield return null;
         }
 
-        // 4. САМОЕ ВАЖНОЕ: ГОВОРИМ ИГРЕ, ЧТО МЫ ВОЗРОЖДАЕМСЯ
+
         if (SaveManager.Instance != null)
         {
             SaveManager.Instance.isRespawning = true;
@@ -75,7 +73,7 @@ public class PlayerDeath : MonoBehaviour, IDamageable
             Debug.LogError("[PlayerDeath] ОШИБКА: SaveManager не найден на сцене!");
         }
 
-        // 5. Перезагружаем уровень
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

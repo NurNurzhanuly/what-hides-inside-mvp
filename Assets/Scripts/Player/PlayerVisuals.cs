@@ -26,17 +26,17 @@ public class PlayerVisuals : MonoBehaviour
         
         float currentSpeed = Mathf.Abs(_rb.linearVelocity.x);
         
-        // 1. ПЕРЕДАЧА В АНИМАТОР
+
         _animator.SetFloat("Speed", currentSpeed);
         _animator.SetBool("IsGrounded", _movement.IsGrounded());
         
-        // Берем состояние виса из скрипта LedgeClimb
+
         if (_ledge != null)
         {
             _animator.SetBool("isHanging", _ledge.IsHanging);
         }
 
-        // 2. ПОВОРОТ ПЕРСОНАЖА
+
         bool isHanging = (_ledge != null && _ledge.IsHanging);
         bool isDragging = (_movement != null && _movement.IsDragging());
 

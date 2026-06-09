@@ -28,7 +28,7 @@ public class PlayerMovement : MonoBehaviour
 
     public LayerMask groundLayer;
 
-    // --- Свойства для других скриптов ---
+
     public bool ExternalControl { get; set; } = false;
     public int Facing { get { return _facing; } }
     public bool CanLedgeGrab { get { return !ExternalControl && !_isOnLadder && !_isOnRope; } }

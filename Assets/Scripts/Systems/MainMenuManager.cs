@@ -61,7 +61,7 @@ public class MainMenuManager : MonoBehaviour
             return;
         }
 
-        // НОРМАЛЬНЫЙ СТАРТ
+
         if (menuFrameImage != null) menuFrameImage.SetActive(true);
         if (settingsPanel != null) settingsPanel.SetActive(false);
         if (menuCam != null) menuCam.Priority = 20;
@@ -134,9 +134,9 @@ public class MainMenuManager : MonoBehaviour
 
     private IEnumerator RestoreSavedLightRoutine()
     {
-        yield return null; // ждём кадр, чтобы URP/контроллер прогрузились
+        yield return null; 
 
-        // ждём, пока контроллер появится (на случай порядка инициализации)
+
         float timeout = 0f;
         while (CaveLightController.Instance == null && timeout < 1f)
         {
