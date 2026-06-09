@@ -7,6 +7,10 @@ public class TurretTrapController : MonoBehaviour
     public Turret[] childTurrets;
     public float synchronizedChargeTime = 0.5f;
 
+    [Header("Audio (3D Loop)")]
+    [Tooltip("AudioSource с зацикленным звуком очереди. Должен быть в режиме 3D.")]
+    public AudioSource trapLoopAudio;
+
     [Header("Движение (Waypoint Mover)")]
     public Transform[] waypoints;
     public float moveSpeed = 3f;
@@ -15,7 +19,7 @@ public class TurretTrapController : MonoBehaviour
     private bool _isTrapSprung = false;
     private bool _isMoving = false;
     private int _currentIndex = 0;
-    private bool _pathCompleted = false; 
+    private bool _pathCompleted = false; // Флаг завершения пути
 
     void Start()
     {
@@ -31,10 +35,10 @@ public class TurretTrapController : MonoBehaviour
     {
         if (!_isMoving || waypoints == null || waypoints.Length == 0) return;
 
-
+        // ПРОВЕРКА: Доехали ли до конца?
         if (_currentIndex >= waypoints.Length)
         {
-            if (!_pathCompleted) FinishTrap(); 
+            if (!_pathCompleted) FinishTrap(); // Выполняем один раз при доезде
             return;
         }
 
@@ -57,6 +61,10 @@ public class TurretTrapController : MonoBehaviour
         _pathCompleted = true;
         _isMoving = false;
 
+        // ОСТАНОВКА ЗВУКА
+        if (trapLoopAudio != null) trapLoopAudio.Stop();
+
+        // Даем команду всем пулеметам прекратить огонь
         foreach (var t in childTurrets)
         {
             t.StopContinuousFire();
@@ -80,6 +88,14 @@ public class TurretTrapController : MonoBehaviour
         }
 
         yield return new WaitForSeconds(synchronizedChargeTime);
+
+        // ЗАПУСК ЗВУКА ОЧЕРЕДИ
+        if (trapLoopAudio != null)
+        {
+            trapLoopAudio.loop = true;
+            trapLoopAudio.spatialBlend = 1f; // Гарантируем 3D
+            trapLoopAudio.Play();
+        }
 
         foreach (var t in childTurrets)
         {

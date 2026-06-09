@@ -38,7 +38,7 @@ public class PlayerVisuals : MonoBehaviour
 
 
         bool isHanging = (_ledge != null && _ledge.IsHanging);
-        bool isDragging = (_movement != null && _movement.IsDragging());
+        bool isDragging = (_movement != null && _movement.IsDragging);
 
         if (currentSpeed > 0.1f && !isHanging && !isDragging)
         {
